@@ -6,6 +6,7 @@ flowchart TB
  UC --> RULES["PaymentOrder / reglas de monto y transición"]
  UC --> RP["PaymentOrderRepository / PaymentAuditRepository"]
  PR["PrismaPaymentRepositories"] -.->|Implementa| RP
+ PR --> TX["BlockchainTransactionRepository: consulta de evidencia"]
  PR --> DB[("Payments DB")]
  UC --> SP["PaymentVerificationStrategy"]
  S["TronUsdtVerificationStrategy"] -.->|Implementa| SP
@@ -21,3 +22,5 @@ flowchart TB
 ```
 
 Las flechas discontinuas indican implementación de un puerto. El módulo de composición es la única pieza de presentación que construye adaptadores concretos. El dominio no importa NestJS, Prisma ni configuración de entorno. La estrategia vive en aplicación porque implementa un puerto de aplicación; las reglas puras de dinero y transición viven en dominio.
+
+`BlockchainTransactionRepository` está implementado por PrismaPaymentRepositories; el flujo de verificación persiste evidencia a través del commit atómico de PaymentOrderRepository. Su consulta `find` se usa en la prueba e2e para comprobar la evidencia, no es una consulta directa adicional del caso de uso.

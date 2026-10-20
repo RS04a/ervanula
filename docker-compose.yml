@@ -4,9 +4,9 @@ services:
     environment:
       MYSQL_DATABASE: arveluna_payments
       MYSQL_USER: arveluna
-      MYSQL_PASSWORD: arveluna
-      MYSQL_ROOT_PASSWORD: local-root-only
-    ports: ["3306:3306"]
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Configura MYSQL_PASSWORD en .env con npm run env:init}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Configura MYSQL_ROOT_PASSWORD en .env con npm run env:init}
+    ports: ["127.0.0.1:3306:3306"]
     volumes: ["payments-data:/var/lib/mysql"]
     healthcheck:
       test:

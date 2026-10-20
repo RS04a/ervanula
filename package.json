@@ -20,7 +20,8 @@
     "format": "prettier --write \"backend/**/*.ts\" \"frontend/src/*\" \"frontend/index.html\" \"docs/*.md\" \"*.json\" \"*.mjs\"",
     "start": "concurrently -k \"npm:start:backend\" \"npm:start:frontend\"",
     "start:backend": "concurrently -k \"node backend/dist/apps/payments-service/src/main.js\" \"node backend/dist/apps/api-gateway/src/main.js\"",
-    "start:frontend": "npm run preview -w frontend"
+    "start:frontend": "npm run preview -w frontend",
+    "env:init": "node scripts/init-env.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

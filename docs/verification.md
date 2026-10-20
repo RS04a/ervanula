@@ -1,49 +1,52 @@
-# Evidencia de verificación — 19 de octubre de 2026
+# Verificación final — 20 de octubre de 2026
 
-Entorno: macOS ARM64, Node v24.21.0, npm 11.19.0, Docker Desktop / MySQL 8.4, Chrome instalado. Proveedor simulado; no API key ni acceso a blockchain en las pruebas.
+Entorno ejecutado: macOS ARM64, Node v24.21.0, npm 11.19.0, Docker Desktop, MySQL 8.4 y Chrome. Zona de referencia: America/Bogota. Proveedor operativo: simulado. TronGrid permanece como extensión pendiente y no fue probado ni presentado como implementado.
 
-| Comprobación ejecutada            | Resultado final                                                                       |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `npm install`                     | Dependencias de workspaces instaladas y lockfile generado                             |
-| `npm ci` en `/tmp/arveluna-clean` | Instalación limpia sin node_modules ni .env originales; 0 vulnerabilidades reportadas |
-| `npm run db:generate`             | Prisma Client 6.19.3 generado                                                         |
-| `docker compose up -d --wait`     | MySQL iniciado y Healthy                                                              |
-| `npm run db:migrate`              | Migración `202610190001_init` aplicada; repetición sin migraciones pendientes         |
-| `npm run db:seed`                 | Upsert de orden determinista; repetición sin errores                                  |
-| `npm run build`                   | TypeScript estricto y frontend Vite/Tailwind CLI compilados                           |
-| `npm run lint`                    | ESLint y comprobación de dependencias arquitectónicas sin errores                     |
-| `npm test`                        | 18 pruebas, 18 pasan, 0 fallan                                                        |
-| `npm run test:e2e`                | 2 pruebas, 2 pasan: HTTP real, Prisma/MySQL y desconexión del servicio                |
-| `npm run test:browser`            | 2 pruebas, 2 pasan: flujo completo Chrome y renderizado de los 4 diagramas Mermaid    |
-| `npm audit fix` final             | 0 vulnerabilidades; dependencias resueltas en package-lock.json                       |
-| `git check-ignore`                | .env, CSS generado y dist excluidos                                                   |
+## Resultados ejecutados
 
-La copia limpia se creó excluyendo node_modules, .git, .env, dist y resultados de pruebas. Se copió `.env.example` como `.env`. Con el lockfile final se ejecutaron `npm ci`, generación Prisma, build, lint y las 18 pruebas unitarias. Las pruebas HTTP y de navegador se ejecutaron en el proyecto principal con el mismo lockfile y MySQL local.
+| Comprobación                                         | Resultado real                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Lectura completa de AGENTS.md y `git status` inicial | Rama main, árbol limpio, commit base `8e8d39b`; sin cambios existentes que sobrescribir                                               |
+| `npm install --package-lock-only --ignore-scripts`   | Lockfile sincronizado, 0 vulnerabilidades reportadas                                                                                  |
+| `npm ci` sobre el ZIP extraído                       | Instalación limpia: 460 paquetes instalados, 0 vulnerabilidades reportadas                                                            |
+| `npm run env:init`, repetido                         | Crea .env privado; segunda ejecución conserva el existente                                                                            |
+| `docker compose … up -d --wait --pull never`         | MySQL local y MySQL de prueba aislado alcanzan Healthy                                                                                |
+| `npm run db:generate`                                | Prisma Client 6.19.3 generado en proyecto y copia extraída                                                                            |
+| `npm run db:migrate` en base existente               | Sin migraciones pendientes; datos conservados                                                                                         |
+| `npm run db:migrate` en MySQL nuevo aislado          | Migración `202610190001_init` aplicada desde cero                                                                                     |
+| `npm run db:seed`                                    | Correcto; repetido dos veces en la base aislada sin errores                                                                           |
+| `npm run lint`                                       | ESLint y regla de dependencias de Clean Architecture pasan en proyecto y copia extraída                                               |
+| `npm run build`                                      | Backend TypeScript y frontend Vite/Tailwind CLI compilan en ambos                                                                     |
+| `npm test`                                           | 18 unitarias pasan, 0 fallan, en proyecto y copia extraída                                                                            |
+| `npm run test:e2e`                                   | 2 pruebas HTTP de integración/e2e pasan en proyecto y copia extraída                                                                  |
+| `npm run test:browser`                               | 2 pruebas pasan: recorrido de usuario y renderizado Mermaid                                                                           |
+| http://localhost:5173                                | HTTP 200, aplicación abierta y probada con Chrome                                                                                     |
+| http://localhost:3000/docs                           | HTTP 200; también Swagger JSON y YAML comprobados por e2e                                                                             |
+| http://localhost:3000/api/health                     | HTTP 200 y `{"status":"ok","service":"payments"}`                                                                                     |
+| `git diff --check`                                   | Sin errores de whitespace                                                                                                             |
+| ZIP: CRC, extracción y comparación byte a byte       | Correctos; lista completa en [zip-files.txt](zip-files.txt)                                                                           |
+| ZIP: exclusiones y escaneo de secretos               | Sin .env, claves privadas, tokens detectados ni credenciales configuradas; excepciones públicas ilustrativas de AGENTS.md conservadas |
 
-## Evidencia funcional
+## Cobertura funcional y patrones
 
-- Creación y consulta de orden desde Chrome.
-- Hash válido y escenario con varios Transfer llegan a CONFIRMED.
-- Misma orden/hash confirmado es idempotente.
-- Auditoría persistente de creación y transiciones; timestamps ordenados dentro de la transacción.
-- Evidencia de pago confirmado y rechazo por receptor persistidas en BlockchainTransaction.
-- Dos órdenes concurrentes disputan un hash: una obtiene 201 y la otra 409; no se aplica dos veces.
-- Proveedor caído devuelve 503 recuperable y conserva PENDING; fallo definitivo devuelve 422 y REJECTED.
-- Strategy sustituible y repositorios en memoria ejecutados en unitarias.
-- Proxy con límite de intentos y timeout; datos inválidos no se reintentan.
-- Identidad singleton de AppConfig, Proxy y cliente HTTP comprobada en el contenedor Nest.
-- requestId propagado al servicio, respuesta, auditoría y logs; errores públicos consistentes.
-- Gateway devuelve COMMUNICATION_ERROR controlado al fallar Payments.
-- Swagger JSON y YAML responden 200.
-- Chrome confirma que no existe desbordamiento horizontal a 390 px.
-- Capturas inspeccionadas: [escritorio](demo-desktop.png) y [móvil](demo-mobile.png).
+Las 18 unitarias verifican montos exactos con BigInt, creación/consulta, contrato, receptor, monto, red, éxito, expiración, idempotencia, duplicados, ausencia de transacción, confirmaciones, múltiples eventos Transfer, Strategy sustituible, repositorios en memoria, límites del Proxy, timeout y datos inválidos sin reintentos.
 
-## Límites y condiciones de reproducción
+Las 2 pruebas HTTP cruzan Gateway → Payments → Prisma/MySQL con proveedor simulado. Verifican error uniforme, requestId, auditoría, evidencia confirmada y rechazada, reutilización singleton de AppConfig/Proxy/cliente HTTP, unicidad concurrente del hash, indisponibilidad recuperable y desconexión controlada de Payments. La clasificación integración/e2e comparte el comando `test:e2e`; no se presenta como dos suites distintas adicionales.
 
-Docker Desktop estaba inicialmente detenido. Se inició y se descargó MySQL con una configuración temporal sin credenciales al atascarse el helper; no se alteró la configuración Docker del usuario. Las operaciones de red, procesos y acceso al socket local requirieron permisos del entorno y fueron aprobadas. No quedaron controles obligatorios bloqueados.
+Las 2 pruebas de navegador comprueban creación, CONFIRMED, auditoría, duplicado, recuperación y rechazo desde el frontend, adaptabilidad a 390 px y renderizado de los cuatro diagramas Mermaid. Capturas renovadas: [escritorio](demo-desktop.png) y [móvil](demo-mobile.png).
 
-Se corrigió el desbloqueo prematuro de botones durante carga. La prueba final utiliza servicios compilados y espera el healthcheck para evitar reinicios del watcher durante las comprobaciones. Los resultados finales anteriores corresponden a ejecuciones completas sin fallos, no a pruebas omitidas.
+C4 fue contrastado con módulos, casos de uso, puertos, repositorios, cliente del Gateway, API del frontend y esquema Prisma. Components precisa que BlockchainTransactionRepository es una capacidad del adaptador cuya consulta se usa para comprobar evidencia en e2e; el caso de uso persiste evidencia mediante el commit atómico. No aparecen servicios futuros como implementados. TronGrid solo figura como sistema externo/extensión pendiente.
 
-No se verificó TronGrid: el adaptador real es opcional y no está implementado. No se ejecutaron transferencias reales, despliegues, autenticación ni pruebas de producción. Las pruebas de navegador dejan órdenes de demostración identificadas como SALE-001; las e2e HTTP eliminan exclusivamente sus propios datos. MySQL conserva datos en el volumen local.
+## Instalación limpia y datos preservados
 
-La carpeta inicial solo contenía AGENTS.md y no tenía Git. AGENTS.md se conservó sin cambios. Se inicializó Git únicamente en la raíz, sin commits, remotos ni push. Los archivos del MVP aparecen como no seguidos (`??`), listos para revisión.
+Se extrajo el paquete en una carpeta temporal sin node_modules, .env, dist ni .git. Allí se ejecutaron instalación, inicialización privada de entorno, generación, lint, build y unitarias. Para comprobar migraciones desde cero se creó exclusivamente el proyecto Compose temporal `arveluna_zip_review`, con MySQL en 3307 y contraseñas aleatorias locales. Se aplicó la migración, se repitió seed y se ejecutó e2e contra esa base. El paquete conserva la configuración habitual 3306; 3307 solo se utilizó en la prueba aislada.
+
+El .env original no se modificó. Para comprobar el Compose actualizado con el volumen previo se usaron sus valores existentes mediante un archivo privado temporal, sin imprimirlos ni copiarlos al paquete. El volumen y los datos originales se preservaron. Solo el proyecto temporal creado para la prueba se elimina al terminar.
+
+## Paquete y límites de la revisión
+
+`python3 scripts/package-delivery.py` copia una lista explícita de fuentes y configura el ZIP con una sola carpeta raíz ENTREGA_1_ARVELUNA. Comprueba CRC, rutas seguras, exclusiones, patrones de claves/tokens, URLs MySQL y equivalencia de archivos al extraer. El manifiesto enumera 59 archivos. El escaneo no detectó secretos; no constituye una garantía universal frente a todos los formatos posibles. AGENTS.md se conserva íntegro y contiene ejemplos públicos originales de configuración, no credenciales privadas del entorno.
+
+No se distribuyen node_modules, .env, .git, dist, coverage, logs, archivos temporales ni volúmenes/datos MySQL. Las capturas son evidencia visual de escenarios simulados. La documentación y el manifiesto se actualizaron después de ejecutar las pruebas; el ZIP final se vuelve a extraer y comparar. No se modificó la lógica de pagos para esta preparación.
+
+Limitaciones: demo local sin autenticación, autorización, rate limiting ni validación Base58Check; sin monitor blockchain automático, sin pruebas de producción y sin TronGrid implementado. No se movieron fondos ni se usaron API keys. No se hizo commit, push ni publicación. No quedan verificaciones solicitadas bloqueadas por el entorno.

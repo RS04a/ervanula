@@ -9,8 +9,8 @@ MVP universitario de verificación de pagos USDT TRC-20. Crea órdenes, consulta
 Requisitos: Node.js **24 o superior**, npm 11, Docker Desktop iniciado y puertos 3000, 3001, 3306 y 5173 libres. Chrome instalado para la prueba de navegador; las pruebas unitarias no requieren Docker ni internet.
 
 ```bash
-cp .env.example .env
-npm install
+npm ci
+npm run env:init
 docker compose up -d --wait
 npm run db:generate
 npm run db:migrate
@@ -20,7 +20,9 @@ npm run dev
 
 Abrir **http://localhost:5173**. Swagger público: **http://localhost:3000/docs**. Swagger interno: http://localhost:3001/docs. Los procesos se enlazan a loopback. `Ctrl+C` detiene las aplicaciones; `docker compose stop` detiene MySQL preservando los datos.
 
-Para repetir una instalación con las versiones exactas del lockfile, sustituir `npm install` por `npm ci`. No ejecutar migraciones contra bases ajenas al proyecto. Las credenciales de Compose son exclusivamente de desarrollo.
+`npm ci` instala las versiones exactas del lockfile. `npm run env:init` crea un `.env` privado con contraseñas aleatorias y no sobrescribe un `.env` existente. También puede copiarse `.env.example` manualmente y completar MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD y DATABASE_URL coherentemente. No ejecutar migraciones contra bases ajenas al proyecto.
+
+Si ya existe una base local, conservar sus credenciales: las variables MYSQL de Compose deben coincidir con las utilizadas al crear el volumen. Cambiar variables no cambia las contraseñas de un volumen existente. No borrar el volumen para preparar esta entrega.
 
 ## Demo reproducible
 
@@ -85,13 +87,14 @@ El esquema mantiene los campos mínimos y enums exigidos. `amountBaseUnits` usa 
 
 ## Configuración
 
-`.env.example` contiene valores seguros; `.env` está ignorado. No copiar claves privadas ni semillas. Se valida configuración al iniciar Payments (URL MySQL, red, contrato, decimales y límites numéricos); el Gateway valida su URL interna. La configuración de entorno real tiene precedencia sobre `.env`.
+`.env.example` contiene marcadores sin contraseñas ni API keys; `.env` está ignorado. No copiar claves privadas ni semillas. Se valida configuración al iniciar Payments (URL MySQL, red, contrato, decimales y límites numéricos); el Gateway valida su URL interna. La configuración de entorno real tiene precedencia sobre `.env`.
 
 | Variable                                | Uso / valor predeterminado                                      |
 | --------------------------------------- | --------------------------------------------------------------- |
 | `NODE_ENV`                              | development                                                     |
 | `GATEWAY_PORT`, `PAYMENTS_PORT`         | 3000 / 3001                                                     |
 | `PAYMENTS_SERVICE_URL`                  | http://localhost:3001                                           |
+| `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Generadas localmente por `env:init`; obligatorias para Compose  |
 | `DATABASE_URL`                          | MySQL local definido en Compose                                 |
 | `BLOCKCHAIN_PROVIDER`                   | simulated; único adaptador concreto habilitado                  |
 | `TRON_NETWORK`                          | mainnet; también shasta/nile como nombres de red                |
@@ -151,7 +154,7 @@ npm run test:e2e
 npm run test:browser
 ```
 
-`test:e2e` requiere MySQL migrado y usa puertos efímeros, HTTP real, Prisma y el proveedor simulado. Solo elimina sus propias órdenes/evidencias. `test:browser` compila e inicia los servicios y el preview del frontend, espera el healthcheck y utiliza Chrome y prueba la interfaz de escritorio/móvil. Se puede ajustar el ejecutable en `playwright.config.ts` o definir `CHROME_PATH`; no requiere descargar navegadores. Las capturas quedan en `docs/demo-desktop.png` y `docs/demo-mobile.png`.
+`test:e2e` requiere MySQL migrado y usa puertos efímeros, HTTP real, Prisma y el proveedor simulado. Solo elimina sus propias órdenes/evidencias. `test:browser` compila e inicia los servicios y el preview del frontend, espera el healthcheck y utiliza Chrome para probar la interfaz de escritorio/móvil. Se puede ajustar el ejecutable en `playwright.config.ts` o definir `CHROME_PATH`; no requiere descargar navegadores. Las capturas quedan en `docs/demo-desktop.png` y `docs/demo-mobile.png`.
 
 Para ejecutar la versión compilada: `npm run build` y luego `npm start`.
 
@@ -175,3 +178,7 @@ Los diagramas Mermaid se renderizan en visores compatibles y se verifican median
 Demo local sin autenticación, autorización, rate limiting, escaneo de cadena ni verificación criptográfica de direcciones Base58Check: se valida su forma. No exponer los servicios internos ni desplegar esta configuración de desarrollo en producción. La vigencia se evalúa al solicitar verificación; no hay proceso de expiración automática ni polling blockchain. Una orden CONFIRMING puede consultarse/verificarse manualmente; el simulador no avanza bloques por sí mismo. El Proxy limita el tiempo de espera, pero no cancela el trabajo del adaptador simulado; una integración de red debería usar AbortSignal.
 
 El modo simulado garantiza una demo reproducible; no sustituye una integración real con TronGrid. La revisión npm y sus resultados están registrados en la evidencia; no se afirma preparación de producción. No hay implementaciones de Sales, Identity, Inventory, Cash ni transferencias de fondos.
+
+## Paquete para la universidad
+
+Consultar [ENTREGA.md](ENTREGA.md). La carpeta `ENTREGA_1_ARVELUNA` y el ZIP `ARVELUNA_Entrega_1.zip` contienen fuentes, pruebas, documentación y configuración de ejemplo; excluyen dependencias, `.env`, credenciales, compilados y datos locales. TronGrid es una extensión pendiente.
