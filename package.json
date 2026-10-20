@@ -1,0 +1,45 @@
+{
+  "name": "arveluna",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build --workspaces",
+    "lint": "node scripts/check-architecture.mjs && eslint backend frontend/src scripts",
+    "test": "npm run test -w backend",
+    "test:e2e": "npm run test:e2e -w backend",
+    "db:generate": "npm run db:generate -w backend",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend",
+    "test:browser": "npm run build && playwright test",
+    "format": "prettier --write \"backend/**/*.ts\" \"frontend/src/*\" \"frontend/index.html\" \"docs/*.md\" \"*.json\" \"*.mjs\"",
+    "start": "concurrently -k \"npm:start:backend\" \"npm:start:frontend\"",
+    "start:backend": "concurrently -k \"node backend/dist/apps/payments-service/src/main.js\" \"node backend/dist/apps/api-gateway/src/main.js\"",
+    "start:frontend": "npm run preview -w frontend"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.64.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.0",
+    "mermaid": "^12.2.0",
+    "prettier": "^3.9.10",
+    "typescript-eslint": "^8.46.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "js-yaml": "^5.5.0"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.2"
+    }
+  }
+}

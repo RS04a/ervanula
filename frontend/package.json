@@ -1,0 +1,15 @@
+{
+  "name": "@arveluna/frontend",
+  "private": true,
+  "scripts": {
+    "dev": "npm run css && vite --host 127.0.0.1",
+    "build": "npm run css && vite build",
+    "css": "tailwindcss -i src/input.css -o public/output.css --minify",
+    "preview": "vite preview --host 127.0.0.1 --port 5173"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.0",
+    "tailwindcss": "4.3.0",
+    "vite": "^6.4.0"
+  }
+}

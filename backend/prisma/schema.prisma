@@ -1,0 +1,73 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "mysql"
+ url = env("DATABASE_URL")
+}
+enum PaymentStatus {
+ PENDING
+ DETECTED
+ CONFIRMING
+ CONFIRMED
+ REJECTED
+ EXPIRED
+}
+enum PaymentFailureCode {
+ TRANSACTION_NOT_FOUND
+ NETWORK_MISMATCH
+ INVALID_TOKEN
+ WRONG_RECIPIENT
+ AMOUNT_MISMATCH
+ TRANSACTION_FAILED
+ INSUFFICIENT_CONFIRMATIONS
+ ORDER_EXPIRED
+ DUPLICATE_TRANSACTION
+ PROVIDER_UNAVAILABLE
+ INVALID_TRANSACTION_DATA
+}
+model PaymentOrder {
+ id String @id @default(uuid())
+ saleId String
+ merchantId String
+ network String
+ tokenSymbol String
+ tokenContract String
+ recipientAddress String
+ amountBaseUnits String
+ tokenDecimals Int
+ status PaymentStatus @default(PENDING)
+ expiresAt DateTime
+ transactionHash String? @unique
+ failureCode PaymentFailureCode?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ confirmedAt DateTime?
+ audit PaymentAuditEvent[]
+}
+model BlockchainTransaction {
+ id String @id @default(uuid())
+ network String
+ transactionHash String
+ contractAddress String
+ senderAddress String
+ recipientAddress String
+ amountBaseUnits String
+ blockNumber BigInt
+ confirmed Boolean
+ rawPayload Json
+ createdAt DateTime @default(now())
+ @@unique([network, transactionHash])
+}
+model PaymentAuditEvent {
+ id String @id @default(uuid())
+ paymentOrderId String
+ order PaymentOrder @relation(fields: [paymentOrderId], references: [id])
+ previousStatus PaymentStatus?
+ newStatus PaymentStatus
+ eventType String
+ failureCode PaymentFailureCode?
+ details Json
+ createdAt DateTime @default(now())
+ @@index([paymentOrderId, createdAt])
+}

@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+**/dist/
+frontend/public/output.css
+coverage/
+*.log
+.DS_Store
+test-results/
+playwright-report/
