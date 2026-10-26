@@ -1,15 +1,31 @@
 import { loadEnvironment } from "../../../../../libs/contracts/environment";
+import { normalizeTronAddress } from "../../domain/services/tron-address";
+import {
+  TRONGRID_ORIGINS,
+  validateTronGridEndpoint,
+} from "../blockchain/trongrid-network";
 loadEnvironment();
 export class AppConfig {
   readonly network = process.env.TRON_NETWORK ?? "mainnet";
   readonly contract =
-    process.env.USDT_CONTRACT_ADDRESS ?? "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    process.env.TRC20_TOKEN_CONTRACT || process.env.USDT_CONTRACT_ADDRESS || "";
   readonly expirationMinutes = this.integer("PAYMENT_EXPIRATION_MINUTES", 30);
-  readonly minConfirmations = this.integer("MIN_CONFIRMATIONS", 1);
+  readonly minConfirmations = this.integer(
+    process.env.TRON_MIN_CONFIRMATIONS
+      ? "TRON_MIN_CONFIRMATIONS"
+      : "MIN_CONFIRMATIONS",
+    1,
+  );
   readonly timeout = this.integer("PROVIDER_TIMEOUT_MS", 5000);
   readonly retries = this.integer("PROVIDER_MAX_RETRIES", 2, true);
   readonly databaseUrl = process.env.DATABASE_URL;
-  readonly provider = process.env.BLOCKCHAIN_PROVIDER ?? "simulated";
+  readonly provider =
+    process.env.PAYMENT_PROVIDER ||
+    process.env.BLOCKCHAIN_PROVIDER ||
+    "simulated";
+  readonly tronGridBaseUrl =
+    process.env.TRONGRID_BASE_URL || TRONGRID_ORIGINS[this.network];
+  readonly tronGridApiKey = process.env.TRONGRID_API_KEY || undefined;
   constructor() {
     if (this.retries > 3)
       throw new Error("PROVIDER_MAX_RETRIES no puede superar 3");
@@ -19,12 +35,17 @@ export class AppConfig {
       throw new Error("TRON_NETWORK inválida");
     if (!this.databaseUrl?.startsWith("mysql://"))
       throw new Error("DATABASE_URL debe ser mysql://");
-    if (this.provider !== "simulated")
-      throw new Error(
-        "Esta entrega admite BLOCKCHAIN_PROVIDER=simulated; TronGrid es opcional y no está implementado",
-      );
-    if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(this.contract))
-      throw new Error("Contrato TRON inválido");
+    if (!["simulated", "trongrid"].includes(this.provider))
+      throw new Error("PAYMENT_PROVIDER/BLOCKCHAIN_PROVIDER inválido");
+    try {
+      this.contract = normalizeTronAddress(this.contract);
+    } catch {
+      throw new Error("USDT_CONTRACT_ADDRESS/TRC20_TOKEN_CONTRACT inválido");
+    }
+    if (this.provider === "trongrid")
+      validateTronGridEndpoint(this.tronGridBaseUrl, this.network);
+    if (this.tronGridApiKey && /[\r\n]/.test(this.tronGridApiKey))
+      throw new Error("TRONGRID_API_KEY inválida");
     if (process.env.USDT_DECIMALS && process.env.USDT_DECIMALS !== "6")
       throw new Error("USDT_DECIMALS debe ser 6");
   }

@@ -14,4 +14,8 @@ Rutas relativas a la raíz. En Payments, el prefijo abreviado `P/` significa `ba
 
 El cliente Prisma compartido pertenece al repositorio singleton y se desconecta al cerrar Nest. El cliente HTTP del Gateway es un provider singleton; usa `fetch` y su pool de conexiones del proceso. El AsyncLocalStorage en `backend/libs/contracts/http.ts` lleva contexto de petición sin un objeto global mutable por solicitud.
 
-El proveedor operativo es exclusivamente `SimulatedBlockchainProvider`, construido en PaymentsModule y envuelto por el Proxy. No existe un TronGridClient implementado; las variables TRONGRID son una reserva para una extensión pendiente.
+`infrastructure/blockchain/provider.factory.ts` selecciona SimulatedBlockchainProvider o TronGridPaymentProvider y PaymentsModule coloca el resultado detrás del mismo Proxy singleton. `backend/test/trongrid.test.ts` prueba selección, cancelación, reintentos, normalización y Strategy con datos externos. `backend/test/e2e/trongrid-http.test.ts` comprueba DI y evidencia SQL con el adaptador real y transporte HTTP interceptado; no consulta internet.
+
+El HTTP de TronGrid es una función fetch compartida por la instancia singleton del adaptador, sustituible por constructor. No se introdujo un SDK de red en dominio/aplicación. `domain/services/tron-address.ts` contiene la conversión pura Base58Check/hex; la Strategy compara direcciones canónicas. La API key solo se añade al encabezado de salida y no se incluye en logs ni evidencia.
+
+Trade-offs: se confía en el endpoint HTTPS oficial para identificar la red (el recibo TRON no contiene un chainId verificable). La lista de orígenes evita enviar claves a hosts arbitrarios. Cuatro lecturas por verificación permiten distinguir inclusión, ejecución y solidificación, a costa de latencia/cuota. Un error de autorización exige corregir configuración, sin reintentar ni rechazar la orden. No se cambió el esquema ni la transacción SQL que garantiza orden/evidencia/auditoría.

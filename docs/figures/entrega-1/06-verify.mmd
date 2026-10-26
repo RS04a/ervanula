@@ -1,0 +1,27 @@
+sequenceDiagram
+ participant F as Frontend
+ participant G as Gateway
+ participant C as Verify
+ participant R as Repository
+ participant X as Proxy
+ participant B as Provider
+ participant S as Strategy
+ participant D as MySQL
+ Note over F,C: POST /api/payments/orders/:id/verify
+ F->>G: Verificar hash
+ G->>C: HTTP interno
+ C->>R: Buscar orden/hash
+ C->>C: Estado y vigencia
+ C->>X: Consultar
+ X->>B: Lectura
+ B-->>X: Transaction
+ X-->>C: Transaction
+ C->>S: verify
+ S-->>C: Resultado
+ C->>C: Transición
+ C->>R: commit
+ Note over C,R: Estado + evidencia + eventos
+ R->>D: SQL atómico
+ D-->>R: Commit
+ C-->>G: Orden
+ G-->>F: HTTP 201

@@ -14,6 +14,7 @@ import {
   PaymentVerificationStrategy,
   PaymentConfig,
 } from "../ports/ports";
+import { normalizeTronAddress } from "../../domain/services/tron-address";
 export function audit(
   order: PaymentOrder,
   previousStatus: PaymentStatus | null,
@@ -45,12 +46,23 @@ export class CreatePaymentOrder {
     },
     requestId: string,
   ) {
+    let recipient: string;
+    try {
+      recipient = normalizeTronAddress(input.recipientAddress);
+    } catch {
+      throw new PaymentError(
+        "INVALID_REQUEST",
+        "Dirección receptora TRON inválida",
+        false,
+        400,
+      );
+    }
     const now = new Date();
     const order: PaymentOrder = {
       id: randomUUID(),
       saleId: input.saleId,
       merchantId: input.merchantId,
-      recipientAddress: input.recipientAddress,
+      recipientAddress: recipient,
       network: this.config.network,
       tokenSymbol: "USDT",
       tokenContract: this.config.contract,
@@ -100,6 +112,7 @@ export class VerifyPayment {
     private readonly strategy: PaymentVerificationStrategy,
   ) {}
   async execute(id: string, hash: string, requestId: string) {
+    if (/^[a-fA-F0-9]{64}$/.test(hash)) hash = hash.toLowerCase();
     const order = await new GetPaymentOrder(this.repository).execute(id);
     if (order.status === "CONFIRMED" && order.transactionHash === hash)
       return order;
@@ -170,6 +183,7 @@ export class VerifyPayment {
       if (!(error instanceof PaymentError)) throw error;
       if (
         error.retryable ||
+        error.code === "PROVIDER_UNAVAILABLE" ||
         error.code === "DUPLICATE_TRANSACTION" ||
         error.code === "INVALID_REQUEST"
       ) {

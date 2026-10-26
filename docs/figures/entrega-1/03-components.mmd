@@ -1,0 +1,16 @@
+flowchart TB
+ C["PaymentsController
+DTOs / HTTP"] --> U["Use Cases
+Create / Get / Verify / Audit"]
+ U -->|Repository ports| R["PrismaPayment
+Repositories"]
+ U -->|VerificationStrategy| S["TronUsdt
+VerificationStrategy"]
+ U -->|BlockchainProvider| X["Blockchain
+ProviderProxy"]
+ R --> D[("Payments DB")]
+ X --> SM["SimulatedBlockchain
+Provider"]
+ X --> TG["TronGridPayment
+Provider"]
+ TG --> E["TronGrid externo"]

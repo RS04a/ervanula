@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PaymentsController } from "../controllers/payments.controller";
 import { AppConfig } from "../../infrastructure/config/config";
 import { PrismaPaymentRepositories } from "../../infrastructure/database/prisma.repositories";
-import { SimulatedBlockchainProvider } from "../../infrastructure/blockchain/simulated.provider";
+import { selectBlockchainProvider } from "../../infrastructure/blockchain/provider.factory";
 import { BlockchainProviderProxy } from "../../infrastructure/blockchain/provider.proxy";
 import { StructuredLogger } from "../../infrastructure/logging/logger";
 import { TronUsdtVerificationStrategy } from "../../application/tron-usdt-verification.strategy";
@@ -18,10 +18,16 @@ class HealthController {
   constructor(
     @Inject(PrismaPaymentRepositories)
     private readonly repository: PrismaPaymentRepositories,
+    @Inject(AppConfig) private readonly config: AppConfig,
   ) {}
   @Get() async health() {
     await this.repository.client.$queryRaw`SELECT 1`;
-    return { status: "ok", service: "payments" };
+    return {
+      status: "ok",
+      service: "payments",
+      provider: this.config.provider,
+      network: this.config.network,
+    };
   }
 }
 @Module({
@@ -42,7 +48,7 @@ class HealthController {
       inject: [AppConfig, StructuredLogger],
       useFactory: (c: AppConfig, l: StructuredLogger) =>
         new BlockchainProviderProxy(
-          new SimulatedBlockchainProvider(c.contract, c.network),
+          selectBlockchainProvider(c),
           c.timeout,
           c.retries,
           l,

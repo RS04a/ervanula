@@ -1,6 +1,7 @@
 import { PaymentVerificationStrategy } from "./ports/ports";
 import { BlockchainTransaction, PaymentOrder } from "../domain/entities/models";
 import { PaymentError } from "../domain/errors/payment-error";
+import { normalizeTronAddress } from "../domain/services/tron-address";
 export class TronUsdtVerificationStrategy implements PaymentVerificationStrategy {
   constructor(private readonly minConfirmations: number) {}
   verify(order: PaymentOrder, tx: BlockchainTransaction) {
@@ -28,11 +29,15 @@ export class TronUsdtVerificationStrategy implements PaymentVerificationStrategy
     )
       fail("ORDER_EXPIRED", "Transferencia fuera de la vigencia");
     const tokens = tx.transfers.filter(
-      (t) => t.contractAddress === order.tokenContract,
+      (t) =>
+        normalizeTronAddress(t.contractAddress) ===
+        normalizeTronAddress(order.tokenContract),
     );
     if (!tokens.length) fail("INVALID_TOKEN", "Contrato de token incorrecto");
     const recipients = tokens.filter(
-      (t) => t.recipientAddress === order.recipientAddress,
+      (t) =>
+        normalizeTronAddress(t.recipientAddress) ===
+        normalizeTronAddress(order.recipientAddress),
     );
     if (!recipients.length)
       fail(

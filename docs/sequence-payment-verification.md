@@ -8,7 +8,7 @@ sequenceDiagram
  participant U as VerifyPayment
  participant R as Prisma repositories
  participant P as Provider Proxy
- participant B as Simulated Provider
+ participant B as Simulated o TronGrid Provider
  participant S as TronUsdt Strategy
  C->>F: Enviar hash
  F->>G: POST /api/payments/orders/id/verify
@@ -37,3 +37,5 @@ sequenceDiagram
 ```
 
 La unicidad SQL del hash en PaymentOrder impide que dos verificaciones concurrentes consuman la misma transferencia. El update condicional impide que un resultado tardío sobrescriba un estado terminal. CONFIRMED con el mismo hash es idempotente.
+
+En modo TronGrid, la consulta obtiene cuerpo y recibo de `/wallet`, altura actual y recibo solidificado de `/walletsolidity`. Solo se confirma con recibos coherentes y confirmaciones suficientes. Un recibo aún no solidificado produce CONFIRMING; un recibo temporalmente ausente produce fallo recuperable.

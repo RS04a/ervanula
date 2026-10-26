@@ -1,6 +1,6 @@
 # ARVELUNA — Entrega 1
 
-MVP universitario de verificación de pagos USDT TRC-20. Crea órdenes, consulta transferencias públicas simuladas, valida evidencia, controla estados y conserva auditoría. No administra ventas, inventario, caja ni identidad; `saleId` y `merchantId` son referencias externas. No mueve ni custodia fondos.
+MVP universitario de verificación de pagos USDT TRC-20. Crea órdenes, consulta transferencias públicas mediante proveedor simulado o adaptador TronGrid de solo lectura, valida evidencia, controla estados y conserva auditoría. No administra ventas, inventario, caja ni identidad; `saleId` y `merchantId` son referencias externas. No mueve ni custodia fondos.
 
 **Integrantes:** Alberto Russell y Yalal Ajram Elneser.
 
@@ -58,7 +58,7 @@ backend/apps/api-gateway/          Proceso público NestJS; cliente HTTP singlet
 backend/apps/payments-service/src/
   domain/                         Entidades, errores, reglas de monto y estados
   application/                    Casos de uso, puertos y estrategia TRON USDT
-  infrastructure/                 Prisma, Proxy, proveedor simulado, config y logging
+  infrastructure/                 Prisma, Proxy, proveedores simulado/TronGrid, config y logging
   presentation/                   DTOs, controladores y módulo de composición
 backend/libs/contracts/           Contrato transversal de error, requestId y carga de entorno
 backend/prisma/                   Esquema, migración MySQL y seed
@@ -67,7 +67,7 @@ frontend/test/                    Pruebas de navegador y diagramas
 docs/                            C4, secuencia, patrones, guion y evidencia
 ```
 
-Flujo: **Frontend → Gateway → Payments Service → Payments DB / BlockchainProviderProxy → SimulatedBlockchainProvider**. El Gateway no importa Prisma ni accede a la base. Payments es el único propietario de Payments DB. Hay tres tablas de dominio: PaymentOrder, BlockchainTransaction y PaymentAuditEvent, más la tabla técnica de migraciones Prisma. La única FK de dominio relaciona auditoría y orden dentro del mismo servicio.
+Flujo: **Frontend → Gateway → Payments Service → Payments DB / BlockchainProviderProxy → SimulatedBlockchainProvider o TronGridPaymentProvider**. El Gateway no importa Prisma ni accede a la base. Payments es el único propietario de Payments DB. Hay tres tablas de dominio: PaymentOrder, BlockchainTransaction y PaymentAuditEvent, más la tabla técnica de migraciones Prisma. La única FK de dominio relaciona auditoría y orden dentro del mismo servicio.
 
 La regla de dependencias es `presentation → application → domain` e `infrastructure → application/domain`. Dominio y casos de uso no importan NestJS, Prisma, HTTP ni entorno. El módulo de composición en presentación conecta las interfaces con adaptadores concretos. La estrategia reside en aplicación porque implementa su puerto; las reglas puras permanecen en dominio.
 
@@ -89,26 +89,30 @@ El esquema mantiene los campos mínimos y enums exigidos. `amountBaseUnits` usa 
 
 `.env.example` contiene marcadores sin contraseñas ni API keys; `.env` está ignorado. No copiar claves privadas ni semillas. Se valida configuración al iniciar Payments (URL MySQL, red, contrato, decimales y límites numéricos); el Gateway valida su URL interna. La configuración de entorno real tiene precedencia sobre `.env`.
 
-| Variable                                | Uso / valor predeterminado                                      |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `NODE_ENV`                              | development                                                     |
-| `GATEWAY_PORT`, `PAYMENTS_PORT`         | 3000 / 3001                                                     |
-| `PAYMENTS_SERVICE_URL`                  | http://localhost:3001                                           |
-| `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Generadas localmente por `env:init`; obligatorias para Compose  |
-| `DATABASE_URL`                          | MySQL local definido en Compose                                 |
-| `BLOCKCHAIN_PROVIDER`                   | simulated; único adaptador concreto habilitado                  |
-| `TRON_NETWORK`                          | mainnet; también shasta/nile como nombres de red                |
-| `USDT_CONTRACT_ADDRESS`                 | Contrato público USDT mainnet; no confundir con receptor        |
-| `USDT_DECIMALS`                         | 6; otros valores se rechazan                                    |
-| `MERCHANT_WALLET_ADDRESS`               | Referencia de demo; receptor efectivo viene del DTO de creación |
-| `PAYMENT_EXPIRATION_MINUTES`            | 30                                                              |
-| `MIN_CONFIRMATIONS`                     | 1                                                               |
-| `FRONTEND_ORIGIN`                       | http://localhost:5173                                           |
-| `PROVIDER_TIMEOUT_MS`                   | 5000; máximo 30000                                              |
-| `PROVIDER_MAX_RETRIES`                  | 2 reintentos; máximo 3                                          |
-| `TRONGRID_BASE_URL`, `TRONGRID_API_KEY` | Reservadas para integración opcional; no usadas actualmente     |
+| Variable                                | Uso / valor predeterminado                                       |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| `NODE_ENV`                              | development                                                      |
+| `GATEWAY_PORT`, `PAYMENTS_PORT`         | 3000 / 3001                                                      |
+| `PAYMENTS_SERVICE_URL`                  | http://localhost:3001                                            |
+| `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Generadas localmente por `env:init`; obligatorias para Compose   |
+| `DATABASE_URL`                          | MySQL local definido en Compose                                  |
+| `BLOCKCHAIN_PROVIDER`                   | simulated por defecto; admite trongrid                           |
+| `TRON_NETWORK`                          | mainnet; también shasta/nile como nombres de red                 |
+| `USDT_CONTRACT_ADDRESS`                 | Contrato público USDT mainnet; no confundir con receptor         |
+| `USDT_DECIMALS`                         | 6; otros valores se rechazan                                     |
+| `MERCHANT_WALLET_ADDRESS`               | Referencia de demo; receptor efectivo viene del DTO de creación  |
+| `PAYMENT_EXPIRATION_MINUTES`            | 30                                                               |
+| `MIN_CONFIRMATIONS`                     | 1                                                                |
+| `FRONTEND_ORIGIN`                       | http://localhost:5173                                            |
+| `PROVIDER_TIMEOUT_MS`                   | 5000; máximo 30000                                               |
+| `PROVIDER_MAX_RETRIES`                  | 2 reintentos; máximo 3                                           |
+| `TRONGRID_BASE_URL`, `TRONGRID_API_KEY` | Endpoint HTTPS oficial y API key opcional del adaptador TronGrid |
 
-TronGrid **no está implementado ni verificado**. Seleccionar `BLOCKCHAIN_PROVIDER=trongrid` aborta explícitamente el arranque. Para incorporarlo deberá implementarse BlockchainProvider con consultas de solo lectura, eventos TRC-20 y normalización, detrás del Proxy. Las pruebas actuales no dependen de internet ni de claves.
+TronGrid está **implementado y probado con fixtures/mocks**, sin consulta en vivo ni API key real. El proveedor simulado sigue siendo el predeterminado. Ver [integración TronGrid](docs/trongrid.md) para protocolo, normalización, estados, errores y prueba manual opcional.
+
+Aliases con precedencia sobre las variables existentes: `PAYMENT_PROVIDER` sobre `BLOCKCHAIN_PROVIDER`, `TRC20_TOKEN_CONTRACT` sobre `USDT_CONTRACT_ADDRESS` y `TRON_MIN_CONFIRMATIONS` sobre `MIN_CONFIRMATIONS`. Se conserva la compatibilidad con el `.env` anterior. No se escribe ni se sobrescribe su contenido.
+
+Para simulado: `BLOCKCHAIN_PROVIDER=simulated` y `PAYMENT_PROVIDER` sin definir (o `simulated`). Para lectura TronGrid: `PAYMENT_PROVIDER=trongrid`, `TRON_NETWORK` y `TRONGRID_BASE_URL` coherentes, contrato público de la red y, si el servicio lo exige, `TRONGRID_API_KEY` privada. La aplicación rechaza combinaciones de red/endpoint incorrectas. No admite hosts arbitrarios ni redirecciones.
 
 ## API
 
@@ -154,7 +158,7 @@ npm run test:e2e
 npm run test:browser
 ```
 
-`test:e2e` requiere MySQL migrado y usa puertos efímeros, HTTP real, Prisma y el proveedor simulado. Solo elimina sus propias órdenes/evidencias. `test:browser` compila e inicia los servicios y el preview del frontend, espera el healthcheck y utiliza Chrome para probar la interfaz de escritorio/móvil. Se puede ajustar el ejecutable en `playwright.config.ts` o definir `CHROME_PATH`; no requiere descargar navegadores. Las capturas quedan en `docs/demo-desktop.png` y `docs/demo-mobile.png`.
+`test:e2e` requiere MySQL migrado y usa puertos efímeros, HTTP real, Prisma y ambos proveedores (TronGrid con fixtures HTTP interceptados). Solo elimina sus propias órdenes/evidencias. `test:browser` compila e inicia los servicios y el preview del frontend, espera el healthcheck y utiliza Chrome para probar la interfaz de escritorio/móvil. Se puede ajustar el ejecutable en `playwright.config.ts` o definir `CHROME_PATH`; no requiere descargar navegadores. Las capturas quedan en `docs/demo-desktop.png` y `docs/demo-mobile.png`.
 
 Para ejecutar la versión compilada: `npm run build` y luego `npm start`.
 
@@ -175,10 +179,20 @@ Los diagramas Mermaid se renderizan en visores compatibles y se verifican median
 
 ## Limitaciones reales
 
-Demo local sin autenticación, autorización, rate limiting, escaneo de cadena ni verificación criptográfica de direcciones Base58Check: se valida su forma. No exponer los servicios internos ni desplegar esta configuración de desarrollo en producción. La vigencia se evalúa al solicitar verificación; no hay proceso de expiración automática ni polling blockchain. Una orden CONFIRMING puede consultarse/verificarse manualmente; el simulador no avanza bloques por sí mismo. El Proxy limita el tiempo de espera, pero no cancela el trabajo del adaptador simulado; una integración de red debería usar AbortSignal.
+Demo local sin autenticación, autorización, rate limiting ni escaneo automático de cadena; valida checksum Base58Check y normaliza Base58/hex, pero no prueba titularidad de direcciones. No exponer los servicios internos ni desplegar esta configuración de desarrollo en producción. La vigencia se evalúa al solicitar verificación; no hay proceso de expiración automática ni polling blockchain. Una orden CONFIRMING puede consultarse/verificarse manualmente; el simulador no avanza bloques por sí mismo. El Proxy cancela las solicitudes TronGrid mediante AbortSignal al agotar el timeout. El adaptador simulado conserva sus escenarios deterministas.
 
-El modo simulado garantiza una demo reproducible; no sustituye una integración real con TronGrid. La revisión npm y sus resultados están registrados en la evidencia; no se afirma preparación de producción. No hay implementaciones de Sales, Identity, Inventory, Cash ni transferencias de fondos.
+El modo simulado garantiza una demo reproducible. El adaptador TronGrid se probó sin internet mediante fixtures; queda pendiente una comprobación manual en red real/testnet. La revisión npm y sus resultados están registrados en la evidencia; no se afirma preparación de producción. No hay implementaciones de Sales, Identity, Inventory, Cash ni transferencias de fondos.
 
 ## Paquete para la universidad
 
-Consultar [ENTREGA.md](ENTREGA.md). La carpeta `ENTREGA_1_ARVELUNA` y el ZIP `ARVELUNA_Entrega_1.zip` contienen fuentes, pruebas, documentación y configuración de ejemplo; excluyen dependencias, `.env`, credenciales, compilados y datos locales. TronGrid es una extensión pendiente.
+Consultar [ENTREGA.md](ENTREGA.md), el [documento técnico completo](docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.md) y su [PDF de 30 páginas](docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.pdf). El paquete se regeneró con las fuentes actuales y el PDF; la [evidencia documental](docs/documentation-verification.md) detalla las comprobaciones. Para reproducir el empaquetado, instalar las herramientas de `scripts/document-requirements.txt` en un entorno virtual y ejecutar `python scripts/package-delivery.py`. La carpeta `ENTREGA_1_ARVELUNA` y el ZIP `ARVELUNA_Entrega_1.zip` contienen fuentes, pruebas, documentación y configuración de ejemplo; excluyen dependencias, `.env`, credenciales, compilados y datos locales. El adaptador TronGrid está implementado con pruebas offline; la validación en vivo está pendiente.
+
+
+## Defensa C4 — revisión del 25 de octubre de 2026
+
+- [Presentación PowerPoint (12 diapositivas)](ARVELUNA_Arquitectura_C4_Entrega_1.pptx).
+- [Presentación PDF horizontal](ARVELUNA_Arquitectura_C4_Entrega_1.pdf).
+- [Auditoría de fidelidad, pruebas nuevas y limitaciones](docs/defense/audit.md).
+- [Guion y notas de exposición](docs/defense/speaker-notes.md).
+
+El documento técnico de 30 páginas se conserva como anexo. Los tres C4 Markdown incluyen objetivo, responsabilidades, relaciones, alcance y guion. **Pendiente crítico:** los cambios locales no están publicados; la consulta de GitHub del 25 de octubre confirmó main en `a91bb6c`. No se hizo commit ni push. El ZIP de la etapa documental anterior se conserva y no incluye esta nueva presentación.

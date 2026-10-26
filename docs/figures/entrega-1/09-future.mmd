@@ -1,0 +1,18 @@
+flowchart TB
+ U["Usuarios / comercios"] --> G["Gateway futuro"]
+ G --> A["Identity Service
+Merchant Service"]
+ G --> B["Sales Service
+Inventory Service
+Cash Register Service"]
+ G --> C["Payments Service
+Import Service"]
+ G --> D["Diagnostics Service
+Simulation Service
+Recommendation Service"]
+ B -.-> BUS["RabbitMQ propuesto
+NO implementado"]
+ C -.-> BUS
+ D -.-> BUS
+ BUS --- N["Cada servicio tendría su base
+Sin claves foráneas entre servicios"]

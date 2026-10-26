@@ -17,7 +17,7 @@ DIRECTORIES = ['backend', 'frontend', 'docs', 'scripts']
 FORBIDDEN = {'node_modules', '.git', 'dist', 'coverage', 'test-results',
              'playwright-report', '__pycache__', '.DS_Store', '.env'}
 EXTENSIONS = {'.md', '.ts', '.js', '.mjs', '.json', '.html', '.css', '.prisma',
-              '.sql', '.toml', '.yml', '.yaml', '.png', '.py', '.txt'}
+              '.sql', '.toml', '.yml', '.yaml', '.png', '.py', '.txt', '.pdf', '.svg', '.mmd'}
 
 def selected():
     result = [Path(name) for name in ROOT_FILES]
@@ -65,7 +65,12 @@ with zipfile.ZipFile(ARCHIVE) as archive:
         assert not path.name.endswith(('.log', '.zip', '.pem', '.key', '.tmp'))
         assert not (path.name.startswith('.env') and path.name != '.env.example')
         data = archive.read(item)
-        # Imágenes se conservan como evidencia; escaneo de secretos en texto.
+        # El PDF se inspecciona también como texto descomprimido.
+        if path.suffix == '.pdf':
+            import fitz
+            with fitz.open(stream=data, filetype='pdf') as document:
+                assert len(document) == 30, 'Número de páginas inesperado'
+                data = '\n'.join(page.get_text() for page in document).encode('utf-8')
         if path.suffix != '.png':
             assert not any(re.search(pattern, data) for pattern in patterns), f'Posible secreto: {path}'
             text = data.decode('utf-8')

@@ -8,25 +8,29 @@ export class BlockchainProviderProxy implements BlockchainProvider {
     private readonly retries: number,
     private readonly logger: Logger,
   ) {}
-  async getTransaction(hash: string) {
+  async getTransaction(hash: string, signal?: AbortSignal) {
     for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const combined = signal
+        ? AbortSignal.any([signal, controller.signal])
+        : controller.signal;
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         return normalizeTransaction(
           await Promise.race([
-            this.provider.getTransaction(hash),
+            this.provider.getTransaction(hash, combined),
             new Promise<never>((_, reject) => {
-              timer = setTimeout(
-                () => reject(new Error("Provider timeout")),
-                this.timeout,
-              );
+              timer = setTimeout(() => {
+                controller.abort();
+                reject(new Error("Provider timeout"));
+              }, this.timeout);
             }),
           ]),
         );
       } catch (error) {
         if (error instanceof PaymentError && !error.retryable) throw error;
         this.logger.log("warn", "provider.request", "provider", { attempt });
-        if (attempt >= this.retries)
+        if (signal?.aborted || attempt >= this.retries)
           throw new PaymentError(
             "PROVIDER_UNAVAILABLE",
             "Proveedor temporalmente no disponible",
@@ -36,6 +40,7 @@ export class BlockchainProviderProxy implements BlockchainProvider {
         await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
       } finally {
         clearTimeout(timer);
+        controller.abort();
       }
     }
   }

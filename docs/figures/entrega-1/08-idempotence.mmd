@@ -1,0 +1,15 @@
+sequenceDiagram
+ participant F as Frontend
+ participant G as Gateway
+ participant C as VerifyPayment
+ participant R as Repository
+ participant B as Proxy
+ F->>G: POST verify mismo hash
+ G->>C: execute
+ C->>C: Canonizar hash
+ C->>R: get(id)
+ R-->>C: CONFIRMED y mismo hash
+ C-->>G: Devolver orden existente
+ Note over C,B: No consulta al proveedor
+ Note over C,R: No hace otro commit
+ G-->>F: HTTP 201, misma orden

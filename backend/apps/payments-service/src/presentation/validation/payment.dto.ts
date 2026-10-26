@@ -12,7 +12,7 @@ export class CreateOrderDto {
   @MaxLength(100)
   merchantId!: string;
   @ApiProperty({ example: "TJRabPrwbZy45sbavfcjinPJC18kjpRTv8" })
-  @Matches(/^T[1-9A-HJ-NP-Za-km-z]{33}$/)
+  @Matches(/^(?:T[1-9A-HJ-NP-Za-km-z]{33}|(?:0x)?(?:41)?[a-fA-F0-9]{40})$/)
   recipientAddress!: string;
   @ApiProperty({ example: "10.00" }) @IsString() @MaxLength(28) amount!: string;
 }

@@ -1,0 +1,16 @@
+flowchart TB
+ U["Comercio"] --> F["Frontend
+HTML / JavaScript / Tailwind
+localhost:5173"]
+ F -->|HTTP JSON| G["API Gateway
+NestJS · localhost:3000
+Sin base de datos"]
+ G -->|HTTP interno + requestId| P["Payments Service
+NestJS · localhost:3001"]
+ P -->|Prisma / SQL| D[("Payments Database
+MySQL 8.4
+Propiedad exclusiva de Payments")]
+ P -->|Proxy · predeterminado| S["SimulatedBlockchainProvider
+Adaptador dentro de Payments"]
+ P -->|Proxy · opción de solo lectura| T["TronGrid
+Sistema externo TRON"]

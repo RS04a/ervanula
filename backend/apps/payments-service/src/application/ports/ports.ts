@@ -23,7 +23,10 @@ export interface PaymentAuditRepository {
   append(event: PaymentAuditEvent): Promise<void>;
 }
 export interface BlockchainProvider {
-  getTransaction(hash: string): Promise<BlockchainTransaction | null>;
+  getTransaction(
+    hash: string,
+    signal?: AbortSignal,
+  ): Promise<BlockchainTransaction | null>;
 }
 export interface PaymentVerificationStrategy {
   verify(

@@ -1,0 +1,23 @@
+sequenceDiagram
+ participant G as Gateway
+ participant C as Verify
+ participant S as Validación
+ participant R as Repository
+ participant D as MySQL
+ G->>C: execute
+ C->>S: Consultar y validar
+ alt Fallo de negocio
+ S-->>C: Error de negocio
+ C->>R: commit REJECTED
+ R->>D: SQL atómico
+ C-->>G: HTTP 422
+ else Orden vencida
+ C->>R: commit EXPIRED
+ R->>D: Orden + auditoría
+ C-->>G: HTTP 422
+ else Proveedor indisponible
+ S-->>C: Fallo del proveedor
+ C->>R: append evento
+ R->>D: Solo auditoría
+ C-->>G: HTTP 503
+ end

@@ -1,0 +1,9 @@
+flowchart TB
+ C["Comercio / administrador"] -->|Crea y verifica órdenes| A["ARVELUNA MVP
+Sistema de verificación de pagos"]
+ K["Cliente pagador"] -->|Comunica hash| C
+ K -.->|Transferencia externa al sistema| T["TRON / TronGrid
+Sistema externo"]
+ A -->|Lectura opcional vía TronGrid| T
+ A --- S["Modo predeterminado: simulado
+Sin movimientos de fondos"]

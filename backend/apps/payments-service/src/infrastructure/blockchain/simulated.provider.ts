@@ -16,9 +16,9 @@ export class SimulatedBlockchainProvider implements BlockchainProvider {
       throw new Error("Simulated timeout");
     }
     const transfer = {
-      contractAddress: scenario === "token" ? "invalid" : this.contract,
+      contractAddress: scenario === "token" ? DEMO_ADDRESS : this.contract,
       senderAddress: DEMO_ADDRESS,
-      recipientAddress: scenario === "recipient" ? "TWrong" : DEMO_ADDRESS,
+      recipientAddress: scenario === "recipient" ? this.contract : DEMO_ADDRESS,
       amountBaseUnits: scenario === "amount" ? "999" : "10000000",
     };
     return {

@@ -91,3 +91,23 @@ $("copy").addEventListener("click", async () => {
 $("scenario").addEventListener("change", (event) => {
   $("hash").value = `demo:${event.target.value}:001`;
 });
+
+void api
+  .health()
+  .then((health) => {
+    $("provider").textContent =
+      health.provider === "trongrid"
+        ? `TRONGRID · ${health.network.toUpperCase()} · SOLO LECTURA`
+        : "DEMO · PROVEEDOR SIMULADO";
+    if (health.provider === "trongrid") {
+      $("provider-description").textContent =
+        "Consulta de transferencias públicas existentes. ARVELUNA no firma ni envía transacciones; no envíes fondos para probar esta interfaz.";
+      $("scenario").disabled = true;
+      $("scenario").closest("label").hidden = true;
+      $("hash").value = "";
+      $("hash").placeholder = "Hash hexadecimal de 64 caracteres";
+    }
+  })
+  .catch(() => {
+    $("provider").textContent = "PROVEEDOR NO DISPONIBLE";
+  });

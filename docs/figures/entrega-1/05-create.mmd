@@ -1,0 +1,20 @@
+sequenceDiagram
+ participant F as Frontend
+ participant G as Gateway
+ participant P as Controller
+ participant C as CreateOrder
+ participant R as Repository
+ participant D as MySQL
+ Note over F,G: POST /api/payments/orders
+ F->>G: Crear orden
+ G->>P: HTTP interno + requestId
+ Note over G,P: /internal/payments/orders
+ P->>P: Validar DTO
+ P->>C: execute
+ C->>C: Normalizar y construir PENDING
+ C->>R: create
+ R->>D: SQL: orden y evento
+ D-->>R: Commit
+ C-->>P: PaymentOrder
+ P-->>G: HTTP 201
+ G-->>F: Orden creada

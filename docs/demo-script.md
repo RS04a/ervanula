@@ -1,6 +1,6 @@
 # Defensa técnica — 10 minutos
 
-Preparación: seguir README; MySQL saludable, migraciones aplicadas, `npm run dev`. Abrir http://localhost:5173 y http://localhost:3000/docs. Usar dirección predeterminada y monto `10.00`. Los hashes son pistas y el proveedor genera datos independientes de la orden.
+Preparación: mantener BLOCKCHAIN_PROVIDER=simulated y PAYMENT_PROVIDER sin definir o simulated; seguir README; MySQL saludable, migraciones aplicadas, `npm run dev`. Abrir http://localhost:5173 y http://localhost:3000/docs. Usar dirección predeterminada y monto `10.00`. Los hashes son pistas y el proveedor genera datos independientes de la orden.
 
 1. **0:00–1:00 — Contexto y contenedores.** Abrir `c4-context.md` y `c4-containers.md`. Explicar actores, procesos separados y propiedad exclusiva de Payments DB. No se mueve dinero.
 2. **1:00–2:00 — Clean Architecture.** Mostrar `backend/apps/payments-service/src`: domain, application, infrastructure y presentation. Abrir puertos y caso de uso; no importan Prisma ni Nest.
@@ -15,4 +15,4 @@ Preparación: seguir README; MySQL saludable, migraciones aplicadas, `npm run de
 
 Si se repite la defensa, cambiar sufijo de los hashes para evitar conflictos con ejecuciones anteriores. No borrar datos del usuario. El escenario timeout espera 200 ms: con el timeout predeterminado termina como indisponibilidad simulada; para observar el corte temporal real ejecutar con `PROVIDER_TIMEOUT_MS=50`. La prueba unitaria lo comprueba con 10 ms.
 
-TronGrid es una extensión pendiente: no presentar consultas reales a TRON como parte de la demo implementada.
+El adaptador TronGrid está implementado y probado offline. En la defensa, mostrar `trongrid-payment.provider.ts`, la selección y la prueba e2e con fixtures; no presentar una consulta en vivo como ejecutada. Para una comprobación manual opcional de solo lectura, seguir docs/trongrid.md. No generar ni enviar transferencias para la demo.

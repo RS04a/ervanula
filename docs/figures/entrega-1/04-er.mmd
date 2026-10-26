@@ -1,0 +1,20 @@
+erDiagram
+ PaymentOrder ||--o{ PaymentAuditEvent : historial
+ PaymentOrder {
+  String id PK
+  String transactionHash UK
+  PaymentStatus status
+  DateTime expiresAt
+ }
+ PaymentAuditEvent {
+  String id PK
+  String paymentOrderId FK
+  PaymentStatus previousStatus
+  PaymentStatus newStatus
+ }
+ BlockchainTransaction {
+  String id PK
+  String network
+  String transactionHash
+  Json rawPayload
+ }

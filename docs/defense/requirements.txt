@@ -1,0 +1,5 @@
+# Herramientas aisladas de presentación; no son dependencias de la aplicación.
+PyMuPDF==1.26.5
+python-pptx==1.0.2
+Pillow==11.3.0
+reportlab==4.4.4

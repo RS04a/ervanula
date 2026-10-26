@@ -1,0 +1,4 @@
+# Herramientas de documentación; no son dependencias de la aplicación.
+PyMuPDF==1.26.5
+Markdown==3.9
+Pillow==11.3.0

@@ -1,0 +1,47 @@
+ M .env.example
+ M ENTREGA.md
+ M README.md
+ M backend/apps/payments-service/src/application/ports/ports.ts
+ M backend/apps/payments-service/src/application/tron-usdt-verification.strategy.ts
+ M backend/apps/payments-service/src/application/use-cases/payments.ts
+ M backend/apps/payments-service/src/infrastructure/blockchain/provider.proxy.ts
+ M backend/apps/payments-service/src/infrastructure/blockchain/simulated.provider.ts
+ M backend/apps/payments-service/src/infrastructure/config/config.ts
+ M backend/apps/payments-service/src/presentation/routes-or-modules/payments.module.ts
+ M backend/apps/payments-service/src/presentation/validation/payment.dto.ts
+ M docs/c4-components.md
+ M docs/c4-containers.md
+ M docs/c4-context.md
+ M docs/demo-desktop.png
+ M docs/demo-mobile.png
+ M docs/demo-script.md
+ M docs/patterns.md
+ M docs/sequence-payment-verification.md
+ M docs/verification.md
+ M docs/zip-files.txt
+ M frontend/index.html
+ M frontend/src/api.js
+ M frontend/src/app.js
+ M scripts/package-delivery.py
+?? ARVELUNA_Arquitectura_C4_Entrega_1.pdf
+?? ARVELUNA_Arquitectura_C4_Entrega_1.pptx
+?? backend/apps/payments-service/src/domain/services/tron-address.ts
+?? backend/apps/payments-service/src/infrastructure/blockchain/provider.factory.ts
+?? backend/apps/payments-service/src/infrastructure/blockchain/trongrid-network.ts
+?? backend/apps/payments-service/src/infrastructure/blockchain/trongrid-payment.provider.ts
+?? backend/test/e2e/trongrid-http.test.ts
+?? backend/test/support/trongrid.fixture.ts
+?? backend/test/trongrid.test.ts
+?? docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.md
+?? docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.pdf
+?? docs/defense/
+?? docs/documentation-verification.md
+?? docs/figures/
+?? docs/trongrid.md
+?? frontend/test/provider-mode.spec.ts
+?? scripts/build-defense-presentation.py
+?? scripts/build-technical-document.py
+?? scripts/document-requirements.txt
+?? scripts/print-technical-document.mjs
+?? scripts/render-technical-diagrams.mjs
+?? scripts/review-technical-document.py

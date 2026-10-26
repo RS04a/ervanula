@@ -16,6 +16,7 @@ async function request(path, body) {
   return result;
 }
 export const api = {
+  health: () => request("health"),
   create: (input) => request("payments/orders", input),
   get: (id) => request(`payments/orders/${id}`),
   verify: (id, transactionHash) =>
