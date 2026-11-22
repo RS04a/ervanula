@@ -29,6 +29,7 @@ export interface PaymentOrder {
   createdAt: Date;
   updatedAt: Date;
   confirmedAt: Date | null;
+  version?: number;
 }
 export interface Transfer {
   contractAddress: string;

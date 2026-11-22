@@ -1,16 +1,25 @@
+import { assertPaymentsEntryMode } from "../../../libs/contracts/environment";
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import { PaymentsModule } from "./presentation/routes-or-modules/payments.module";
+import {
+  FullPaymentsModule,
+  PaymentsModule,
+} from "./presentation/routes-or-modules/payments.module";
 import {
   PublicErrorFilter,
   requestContext,
 } from "../../../libs/contracts/http";
 export async function createPaymentsApp() {
-  const app = await NestFactory.create(PaymentsModule, {
-    logger: ["error", "warn"],
-  });
+  const app = await NestFactory.create(
+    process.env.ARVELUNA_FULL_APP === "true"
+      ? FullPaymentsModule
+      : PaymentsModule,
+    {
+      logger: ["error", "warn"],
+    },
+  );
   app.use(requestContext);
   app.useGlobalPipes(
     new ValidationPipe({
@@ -34,7 +43,9 @@ export async function createPaymentsApp() {
   );
   return app;
 }
-if (require.main === module)
+if (require.main === module) {
+  assertPaymentsEntryMode();
   void createPaymentsApp().then((app) =>
     app.listen(Number(process.env.PAYMENTS_PORT ?? 3001), "127.0.0.1"),
   );
+}

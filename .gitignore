@@ -13,3 +13,6 @@ playwright-report/
 # Paquetes finales generados; se distribuyen fuera del historial de código.
 /ENTREGA_1_ARVELUNA/
 /ARVELUNA_Entrega_1.zip
+
+# Paquete de la aplicación completa
+/ARVELUNA_App_Completa.zip

@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/cash-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("CASH_DATABASE_URL")
+}
+model CashRegister {
+  merchantId String @id
+  name String
+  activeId String?
+  sessions CashSession[]
+  movements CashMovement[]
+}
+model CashSession {
+  id String @id @default(uuid())
+  merchantId String
+  register CashRegister @relation(fields: [merchantId], references: [merchantId])
+  userId String
+  openReference String
+  closeReference String?
+  openedAt DateTime @default(now())
+  closedAt DateTime?
+  closedBy String?
+  openingBase String @db.VarChar(64)
+  expectedBase String @db.VarChar(64)
+  countedBase String? @db.VarChar(64)
+  differenceBase String? @db.VarChar(64)
+  movements CashMovement[]
+  @@unique([merchantId, openReference])
+  @@unique([merchantId, closeReference])
+  @@index([merchantId, openedAt, id])
+}
+model CashMovement {
+  id String @id @default(uuid())
+  merchantId String
+  register CashRegister @relation(fields: [merchantId], references: [merchantId])
+  sessionId String?
+  session CashSession? @relation(fields: [sessionId], references: [id])
+  userId String
+  saleId String?
+  paymentId String?
+  reference String
+  kind String
+  asset String @db.VarChar(8)
+  amountBase String @db.VarChar(64)
+  reason String
+  createdAt DateTime @default(now())
+  @@unique([merchantId, reference])
+  @@index([merchantId, createdAt, id])
+}

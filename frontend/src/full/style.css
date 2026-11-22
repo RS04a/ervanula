@@ -1,0 +1,255 @@
+:root {
+  font-family: "Inter", system-ui, sans-serif;
+  color: #192925;
+  background: #f4f6f3;
+}
+.workspace {
+  background: #f4f6f3;
+  color: #192925;
+  min-height: 100vh;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem max(4vw, 1rem);
+  background: #15322b;
+  color: #f4f6f0;
+}
+.top a {
+  color: inherit;
+  text-decoration: none;
+}
+.brand {
+  font-weight: 850;
+  letter-spacing: 0.16em;
+}
+.brand span {
+  color: #bee883;
+}
+#identity {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.85rem;
+  text-align: right;
+}
+#identity button {
+  color: #f4f6f0;
+  border-color: #647f70;
+  background: transparent;
+}
+.shell {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  max-width: 96rem;
+  margin: auto;
+  min-height: calc(100vh - 4rem);
+}
+nav {
+  border-right: 1px solid #dce5dd;
+  padding: 1.25rem 0.8rem;
+}
+nav a {
+  display: block;
+  color: #304a40;
+  text-decoration: none;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.45rem;
+  font-weight: 620;
+  font-size: 0.9rem;
+}
+nav a[aria-current="page"] {
+  background: #d8ecd9;
+  color: #153c29;
+}
+#content {
+  min-width: 0;
+  padding: 1.45rem max(2.5vw, 1rem);
+  outline: none;
+}
+nav[hidden] + main {
+  grid-column: 1/-1;
+  width: min(35rem, 100%);
+  margin: 5vh auto;
+}
+.page-header {
+  margin-bottom: 1.2rem;
+}
+.eyebrow {
+  color: #3c6a57;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-weight: 770;
+  letter-spacing: -0.05em;
+}
+h2 {
+  font-size: 1.13rem;
+  font-weight: 750;
+  margin-bottom: 0.85rem;
+}
+h3 {
+  font-weight: 700;
+}
+.panel {
+  background: #fff;
+  border: 1px solid #dfe7df;
+  border-radius: 0.8rem;
+  padding: 1.1rem;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
+.form-grid,
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.8rem;
+}
+.cards .panel {
+  margin-bottom: 0;
+}
+.cards {
+  margin-bottom: 1rem;
+}
+.form-grid label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 620;
+  min-width: 0;
+  align-content: start;
+}
+.form-grid input,
+.form-grid select {
+  border: 1px solid #b4c4ba;
+  background: white;
+  color: #192925;
+  border-radius: 0.4rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem;
+}
+.submit {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+button {
+  background: #fff;
+  border: 1px solid #b6c7bd;
+  color: #214637;
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+button.primary {
+  background: #23583f;
+  border-color: #23583f;
+  color: white;
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+:focus-visible {
+  outline: 3px solid #44986e;
+  outline-offset: 2px;
+}
+.table-scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+td,
+th {
+  border-bottom: 1px solid #e5ebe5;
+  padding: 0.55rem;
+  text-align: left;
+}
+th {
+  color: #466054;
+}
+.pagination,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+.pill {
+  display: inline-flex;
+  border-radius: 1rem;
+  color: #214b37;
+  background: #e2f1e2;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+}
+.empty,
+.feedback,
+.note {
+  color: #4d6358;
+  font-size: 0.9rem;
+}
+.error {
+  color: #9b2828;
+}
+.metric {
+  font-weight: 760;
+  font-size: 1.55rem;
+}
+.wrap {
+  overflow-wrap: anywhere;
+}
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -10rem;
+  background: white;
+  padding: 0.5rem;
+  z-index: 10;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+@media (max-width: 730px) {
+  .shell {
+    display: block;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    padding: 0.6rem 0.7rem;
+    border: 0;
+    border-bottom: 1px solid #dce5dd;
+  }
+  nav[hidden] {
+    display: none;
+  }
+  nav a {
+    padding: 0.4rem 0.52rem;
+    font-size: 0.8rem;
+  }
+  .top {
+    padding: 0.75rem;
+  }
+  #identity {
+    font-size: 0.76rem;
+  }
+}

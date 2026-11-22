@@ -1,4 +1,4 @@
-const GATEWAY = "http://localhost:3000/api";
+const GATEWAY = "/api";
 async function request(path, body) {
   const response = await fetch(`${GATEWAY}/${path}`, {
     method: body ? "POST" : "GET",

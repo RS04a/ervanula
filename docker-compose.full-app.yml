@@ -1,0 +1,30 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Genera el perfil local}
+    ports: ["127.0.0.1:${FULL_MYSQL_PORT:?Genera el perfil local}:3306"]
+    volumes:
+      - data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 35
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: arveluna
+      RABBITMQ_DEFAULT_PASS: ${FULL_BROKER_PASSWORD:?Genera el perfil local}
+    ports:
+      - "127.0.0.1:${FULL_BROKER_PORT:?Genera el perfil local}:5672"
+      - "127.0.0.1:${FULL_BROKER_UI_PORT:?Genera el perfil local}:15672"
+    volumes: ["broker:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+volumes:
+  data:
+  broker:

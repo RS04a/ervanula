@@ -1,0 +1,62 @@
+## main...origin/main
+ M .env.example
+ M .gitignore
+ M README.md
+ M backend/apps/api-gateway/src/main.ts
+ M backend/apps/payments-service/src/application/use-cases/payments.ts
+ M backend/apps/payments-service/src/domain/entities/models.ts
+ M backend/apps/payments-service/src/domain/services/tron-address.ts
+ M backend/apps/payments-service/src/infrastructure/blockchain/provider.factory.ts
+ M backend/apps/payments-service/src/infrastructure/blockchain/simulated.provider.ts
+ M backend/apps/payments-service/src/infrastructure/config/config.ts
+ M backend/apps/payments-service/src/infrastructure/database/prisma.repositories.ts
+ M backend/apps/payments-service/src/main.ts
+ M backend/apps/payments-service/src/presentation/routes-or-modules/payments.module.ts
+ M backend/apps/payments-service/src/presentation/validation/payment.dto.ts
+ M backend/libs/contracts/environment.ts
+ M backend/package.json
+ M backend/prisma/schema.prisma
+ M backend/prisma/seed.ts
+ M backend/test/trongrid.test.ts
+ M eslint.config.mjs
+ M frontend/src/api.js
+ M frontend/test/payment.spec.ts
+ M frontend/test/provider-mode.spec.ts
+ M package-lock.json
+ M package.json
+ M playwright.config.ts
+ M scripts/check-architecture.mjs
+?? backend/apps/analytics-service/
+?? backend/apps/api-gateway/src/full-app.ts
+?? backend/apps/cash-register-service/
+?? backend/apps/identity-service/
+?? backend/apps/import-service/
+?? backend/apps/inventory-service/
+?? backend/apps/merchant-service/
+?? backend/apps/payments-service/src/application/sale-payments.ts
+?? backend/apps/payments-service/src/domain/services/transaction-hash.ts
+?? backend/apps/payments-service/src/presentation/controllers/full-app.controller.ts
+?? backend/apps/sales-service/
+?? backend/libs/full-app/
+?? backend/prisma/analytics/
+?? backend/prisma/cash/
+?? backend/prisma/identity/
+?? backend/prisma/imports/
+?? backend/prisma/inventory/
+?? backend/prisma/merchant/
+?? backend/prisma/migrations/202611210001_full_app/
+?? backend/prisma/sales/
+?? backend/test/full-app-domain.test.ts
+?? backend/test/full-app/
+?? docker-compose.full-app.yml
+?? docs/full-app/
+?? frontend/app.html
+?? frontend/src/full/
+?? frontend/test/full-app.spec.ts
+?? frontend/vite.config.js
+?? playwright.full.config.ts
+?? scripts/full-app.mjs
+?? scripts/full-documents.mjs
+?? scripts/full-package.mjs
+?? scripts/full-provision.ts
+?? scripts/legacy-test.mjs

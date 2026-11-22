@@ -12,11 +12,20 @@ import {
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder, ApiBody } from "@nestjs/swagger";
 import { Response } from "express";
-import { loadEnvironment } from "../../../libs/contracts/environment";
+import {
+  assertPaymentsEntryMode,
+  loadEnvironment,
+} from "../../../libs/contracts/environment";
 import {
   PublicErrorFilter,
   requestContext,
 } from "../../../libs/contracts/http";
+import { FullAppGateway, publicRoutes } from "./full-app";
+import { services, type Service } from "../../../libs/full-app/contract";
+import {
+  gatewayKey,
+  serviceRequest,
+} from "../../../libs/full-app/service-http";
 loadEnvironment();
 export class PaymentsHttpClient {
   readonly url = process.env.PAYMENTS_SERVICE_URL ?? "http://localhost:3001";
@@ -111,32 +120,114 @@ class GatewayController {
     return this.forward(`payments/orders/${encodeURIComponent(id)}/audit`, res);
   }
 }
+@Controller("api")
+class FullAppHealth {
+  @Get("health") async health(@Res() res: Response) {
+    const names = Object.keys(services) as Service[];
+    const statuses = await Promise.all(
+      names.map(async (name) => {
+        try {
+          const result = await serviceRequest(
+            "gateway",
+            name,
+            name === "payments" ? "health" : `${name}/health`,
+          );
+          return [name, result.status === 200 ? "ok" : "unavailable"] as const;
+        } catch {
+          return [name, "unavailable"] as const;
+        }
+      }),
+    );
+    const ok = statuses.every(([, status]) => status === "ok");
+    res.status(ok ? 200 : 503).json({
+      status: ok ? "ok" : "degraded",
+      services: Object.fromEntries(statuses),
+    });
+  }
+}
+@Module({ controllers: [FullAppHealth, FullAppGateway] })
+class FullAppModule {}
 @Module({ controllers: [GatewayController], providers: [PaymentsHttpClient] })
 export class GatewayModule {}
 export async function createGatewayApp() {
-  const app = await NestFactory.create(GatewayModule, {
-    logger: ["error", "warn"],
-  });
+  const fullApp = process.env.ARVELUNA_FULL_APP === "true";
+  if (fullApp) gatewayKey();
+  const app = await NestFactory.create(
+    fullApp ? FullAppModule : GatewayModule,
+    {
+      logger: ["error", "warn"],
+    },
+  );
   app.use(requestContext);
   app.useGlobalFilters(new PublicErrorFilter());
   app.enableCors({
     origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+    credentials: fullApp,
   });
   app.enableShutdownHooks();
-  SwaggerModule.setup(
-    "docs",
-    app,
-    SwaggerModule.createDocument(
-      app,
-      new DocumentBuilder()
-        .setTitle("ARVELUNA Gateway")
-        .setVersion("1")
-        .build(),
-    ),
-  );
+  const definition = new DocumentBuilder()
+    .setTitle("ARVELUNA Gateway")
+    .setVersion(fullApp ? "2" : "1");
+  if (fullApp) definition.addCookieAuth("arveluna_session");
+  const document = SwaggerModule.createDocument(app, definition.build());
+  if (fullApp) {
+    for (const path of Object.keys(document.paths))
+      if (path !== "/api/health") delete document.paths[path];
+    for (const [service, method, route] of publicRoutes) {
+      const path = `/api/${service}/${route}`;
+      const operation = {
+        tags: [service],
+        security: route === "login" ? [] : [{ cookie: [] }],
+        parameters: [
+          ...(route.includes("{id}")
+            ? [
+                {
+                  in: "path",
+                  name: "id",
+                  required: true,
+                  schema: { type: "string" },
+                },
+              ]
+            : []),
+          ...(method === "POST"
+            ? [
+                {
+                  in: "header",
+                  name: "x-arveluna-csrf",
+                  required: true,
+                  schema: { type: "string", enum: ["1"] },
+                },
+              ]
+            : []),
+        ],
+        requestBody:
+          method === "POST"
+            ? {
+                content: { "application/json": { schema: { type: "object" } } },
+              }
+            : undefined,
+        responses: {
+          [method === "POST" ? 201 : 200]: {
+            description: "Operación aceptada",
+          },
+          400: { description: "Entrada inválida" },
+          401: { description: "Sesión inválida" },
+          403: { description: "Permiso u origen insuficiente" },
+          409: { description: "Conflicto de dominio" },
+        },
+      };
+      document.paths[path] = {
+        ...document.paths[path],
+        [method.toLowerCase()]: operation,
+      };
+    }
+  }
+  SwaggerModule.setup("docs", app, document);
   return app;
 }
-if (require.main === module)
+if (require.main === module) {
+  assertPaymentsEntryMode();
   void createGatewayApp().then((app) =>
     app.listen(Number(process.env.GATEWAY_PORT ?? 3000), "127.0.0.1"),
   );
+}

@@ -1,0 +1,312 @@
+import {
+  button,
+  date,
+  el,
+  empty,
+  form,
+  heading,
+  money,
+  panel,
+  pill,
+  short,
+  table,
+} from "./ui.js";
+import { productChoice } from "./operations.js";
+
+function updated(report) {
+  return el(
+    "p",
+    { class: "note", role: "status" },
+    `Corte ${date(report.lastUpdated)}${report.stale ? " · sincronización pendiente" : ""}`,
+  );
+}
+function controls(ctx) {
+  return el(
+    "div",
+    { class: "actions" },
+    form(
+      "Aplicar periodo",
+      [
+        [
+          "days",
+          "Días anteriores al corte",
+          { type: "number", min: 1, max: 365, value: ctx.state.days ?? 30 },
+        ],
+      ],
+      ({ days }) => ctx.go({ days: Number(days) }),
+    ),
+    button("Reconciliar datos", () => ctx.action("analytics/reconcile")),
+  );
+}
+export async function dashboard(ctx) {
+  const [report, register, payments] = await Promise.all([
+    ctx.get("analytics/diagnostics?days=30"),
+    ctx.get("cash/register"),
+    ctx.get("payments/settings"),
+  ]);
+  return [
+    heading("Dashboard", "Resumen del comercio"),
+    updated(report),
+    el(
+      "div",
+      { class: "cards" },
+      panel(
+        "Ventas completadas · 30 días",
+        Object.entries(report.salesByAsset).length
+          ? Object.entries(report.salesByAsset).map(([asset, data]) =>
+              el("p", { class: "metric" }, money(data.amountBase, asset)),
+            )
+          : empty("Aún no hay ventas completadas en el periodo."),
+      ),
+      panel(
+        "Efectivo esperado",
+        el(
+          "p",
+          { class: "metric" },
+          money(register.session?.expectedBase, "COP"),
+        ),
+        el(
+          "p",
+          { class: "note" },
+          register.session ? "Caja abierta" : "Caja cerrada",
+        ),
+      ),
+      panel(
+        "Inventario bajo mínimo",
+        el("p", { class: "metric" }, report.lowStock.length),
+        el("a", { href: "#diagnostics" }, "Ver diagnóstico"),
+      ),
+      panel(
+        "Pagos TRC-20",
+        pill(payments.provider === "simulated" ? "Simulación" : "TronGrid"),
+        el("p", {}, payments.network),
+      ),
+    ),
+    panel(
+      "Ventas pendientes",
+      table(
+        ["Venta", "Estado", "Monto", "Acción"],
+        report.pendingSales.map((s) => [
+          short(s.id),
+          pill(s.status),
+          money(s.totalBase, s.asset),
+          el("a", { href: `#sales/${s.id}` }, "Abrir venta"),
+        ]),
+      ),
+    ),
+    button("Reconciliar datos", () => ctx.action("analytics/reconcile")),
+  ];
+}
+export async function diagnostics(ctx) {
+  const data = await ctx.get(
+    `analytics/diagnostics?days=${ctx.state.days ?? 30}`,
+  );
+  return [
+    heading("Diagnósticos", "Análisis"),
+    updated(data),
+    controls(ctx),
+    panel(
+      "Productos bajo mínimo",
+      table(
+        ["SKU", "Disponible", "Mínimo"],
+        data.lowStock.map((p) => [p.sku, p.available, p.minimum]),
+      ),
+    ),
+    panel(
+      "Productos sin movimiento",
+      data.sufficient.matureProducts
+        ? table(
+            ["SKU", "Último movimiento"],
+            data.dormant.map((p) => [p.sku, date(p.lastMovement)]),
+          )
+        : empty("Sin productos con la antigüedad requerida."),
+    ),
+    panel(
+      "Ventas por activo",
+      table(
+        ["Activo", "Ventas", "Monto"],
+        Object.entries(data.salesByAsset).map(([asset, s]) => [
+          asset,
+          s.count,
+          money(s.amountBase, asset),
+        ]),
+      ),
+    ),
+    panel(
+      "Ventas pendientes",
+      table(
+        ["Venta", "Estado", "Monto"],
+        data.pendingSales.map((s) => [
+          short(s.id),
+          pill(s.status),
+          money(s.totalBase, s.asset),
+        ]),
+      ),
+    ),
+    panel(
+      "Diferencias de caja",
+      table(
+        ["Sesión", "Cierre", "Diferencia"],
+        data.cashDifferences.map((c) => [
+          short(c.id),
+          date(c.closedAt),
+          money(c.differenceBase, "COP"),
+        ]),
+      ),
+    ),
+    panel(
+      "Pagos rechazados o expirados",
+      table(
+        ["Orden", "Estado", "Código", "Fecha"],
+        data.paymentFailures.map((p) => [
+          el("a", { href: `#payments/${p.id}` }, short(p.id)),
+          pill(p.status),
+          p.failureCode,
+          date(p.updatedAt),
+        ]),
+      ),
+    ),
+  ];
+}
+export async function simulation(ctx) {
+  const products = await ctx.get(
+    `inventory/products?search=${encodeURIComponent(ctx.state.search ?? "")}`,
+  );
+  const data = ctx.state.simulation;
+  return [
+    heading("Simulaciones", "Escenarios"),
+    panel(
+      "Supuestos del escenario",
+      el(
+        "p",
+        { class: "note" },
+        "Un punto base equivale a 0,01 %. El escenario usa el corte analítico y no modifica operaciones.",
+      ),
+      form(
+        "Buscar producto",
+        [
+          [
+            "search",
+            "SKU o descripción",
+            { required: false, value: ctx.state.search },
+          ],
+        ],
+        ({ search }) => ctx.go({ search }),
+      ),
+      products.length
+        ? form(
+            "Calcular escenario",
+            [
+              [
+                "productId",
+                "Producto",
+                productChoice(products, ctx.state.productId),
+              ],
+              [
+                "baselineDays",
+                "Días de ventas históricas",
+                { type: "number", min: 1, max: 365, value: 30 },
+              ],
+              [
+                "horizonDays",
+                "Días del escenario",
+                { type: "number", min: 1, max: 365, value: 30 },
+              ],
+              [
+                "priceBasisPoints",
+                "Cambio de precio (puntos base)",
+                { type: "number", min: -10000, max: 100000, value: 0 },
+              ],
+              [
+                "demandBasisPoints",
+                "Cambio de demanda (puntos base)",
+                { type: "number", min: -10000, max: 100000, value: 0 },
+              ],
+            ],
+            async ({ productId, ...values }) => {
+              const simulation = await ctx.post("analytics/simulate", {
+                productId,
+                ...Object.fromEntries(
+                  Object.entries(values).map(([k, v]) => [k, Number(v)]),
+                ),
+              });
+              ctx.go({ simulation, productId });
+            },
+          )
+        : empty("Crea un producto para simular."),
+    ),
+    data
+      ? panel(
+          `Resultado · ${data.sku}`,
+          updated(data),
+          el("p", {}, data.calculation),
+          el(
+            "p",
+            { class: "note" },
+            `Base de ${data.assumptions.baselineDays} días · horizonte de ${data.assumptions.horizonDays} días · precio ${data.assumptions.priceBasisPoints} pb · demanda ${data.assumptions.demandBasisPoints} pb`,
+          ),
+          el(
+            "p",
+            { class: "note" },
+            `Corte base: ${data.baseline.sales} ventas, ${data.baseline.units} unidades vendidas, ${data.baseline.available} disponibles y mínimo de ${data.baseline.minimum}.`,
+          ),
+          data.sufficient
+            ? table(
+                [
+                  "Precio del escenario",
+                  "Unidades",
+                  "Ingreso del escenario",
+                  "Reposición",
+                ],
+                [
+                  [
+                    money(data.projectedPriceBase, data.asset, data.scale),
+                    data.projectedUnits,
+                    money(data.projectedRevenueBase, data.asset, data.scale),
+                    data.reorderUnits,
+                  ],
+                ],
+              )
+            : empty(
+                "Sin ventas históricas suficientes para estimar unidades o reposición.",
+              ),
+        )
+      : null,
+  ];
+}
+export async function recommendations(ctx) {
+  const data = await ctx.get(
+    `analytics/recommendations?days=${ctx.state.days ?? 30}`,
+  );
+  return [
+    heading("Recomendaciones", "Análisis"),
+    updated(data),
+    controls(ctx),
+    ...data.rules.map((rule) =>
+      panel(
+        rule.action,
+        el("p", {}, rule.rule),
+        el("p", { class: "note" }, `Umbral ${rule.threshold} · ${rule.period}`),
+        !rule.sufficient
+          ? empty("Datos insuficientes para aplicar la regla.")
+          : !rule.findings.length
+            ? empty("Sin hallazgos para este corte.")
+            : el(
+                "ul",
+                {},
+                rule.findings.map((value) =>
+                  el(
+                    "li",
+                    {},
+                    value.sku
+                      ? `${value.sku} · ${value.minimum === undefined ? `último movimiento ${date(value.lastMovement)}` : `disponible ${value.available} · mínimo ${value.minimum}`}`
+                      : value.code
+                        ? `${value.code} · ${value.count} órdenes (${value.orders.map(short).join(", ")})`
+                        : `Sesión ${short(value.id)} · ${date(value.closedAt)} · ${money(value.differenceBase, "COP")}`,
+                  ),
+                ),
+              ),
+      ),
+    ),
+  ];
+}

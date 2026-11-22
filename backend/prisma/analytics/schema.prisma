@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/analytics-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("ANALYTICS_DATABASE_URL")
+}
+model Projection {
+  merchantId String @id
+  revision Int @default(0)
+  collectedRevision Int @default(-1)
+  collectedAt DateTime?
+  payload Json?
+  retryAt DateTime?
+  leaseToken String?
+  leaseUntil DateTime?
+}
+model ProcessedEvent {
+  eventId String @id
+  createdAt DateTime @default(now())
+}

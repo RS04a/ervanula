@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/imports-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("IMPORTS_DATABASE_URL")
+}
+model ImportJob {
+  id String @id
+  merchantId String
+  userId String
+  status String @db.VarChar(16)
+  contentDigest String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  confirmedAt DateTime?
+  rows ImportRowResult[]
+  @@index([merchantId, createdAt, id])
+  @@index([status, updatedAt])
+}
+model ImportRowResult {
+  jobId String
+  rowNumber Int
+  sku String?
+  product Json?
+  status String @db.VarChar(16)
+  error String?
+  attempts Int @default(0)
+  retryable Boolean @default(false)
+  retryAt DateTime?
+  leaseToken String?
+  leaseUntil DateTime?
+  job ImportJob @relation(fields: [jobId], references: [id])
+  @@id([jobId, rowNumber])
+  @@index([status, retryAt, leaseUntil])
+}

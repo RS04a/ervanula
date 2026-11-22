@@ -1,3 +1,4 @@
+import { DEMO_HASH } from "../../domain/services/transaction-hash";
 import { BlockchainProvider } from "../../application/ports/ports";
 import { BlockchainTransaction } from "../../domain/entities/models";
 export const DEMO_ADDRESS = "TJRabPrwbZy45sbavfcjinPJC18kjpRTv8";
@@ -8,7 +9,7 @@ export class SimulatedBlockchainProvider implements BlockchainProvider {
   ) {}
   async getTransaction(hash: string): Promise<BlockchainTransaction | null> {
     const scenario = hash.split(":")[1];
-    if (scenario === "missing" || !hash.startsWith("demo:")) return null;
+    if (scenario === "missing" || !DEMO_HASH.test(hash)) return null;
     if (scenario === "unavailable")
       throw new Error("Simulated temporary outage");
     if (scenario === "timeout") {
@@ -22,7 +23,12 @@ export class SimulatedBlockchainProvider implements BlockchainProvider {
       amountBaseUnits: scenario === "amount" ? "999" : "10000000",
     };
     return {
-      network: scenario === "network" ? "shasta" : this.network,
+      network:
+        scenario === "network"
+          ? this.network === "shasta"
+            ? "nile"
+            : "shasta"
+          : this.network,
       transactionHash: hash,
       blockNumber: "123456",
       confirmed: scenario !== "pending",

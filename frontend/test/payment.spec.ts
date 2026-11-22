@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 test("creación, confirmación, auditoría, duplicado y recuperación desde el navegador", async ({
   page,
-}) => {
+}, info) => {
   page.on("pageerror", (error) => console.error("PAGE ERROR", error.message));
   await page.goto("/");
   await page.getByRole("button", { name: "Crear orden" }).click();
@@ -21,7 +21,10 @@ test("creación, confirmación, auditoría, duplicado y recuperación desde el n
   await page.locator("#scenario").selectOption("recipient");
   await page.getByRole("button", { name: "Verificar transferencia" }).click();
   await expect(page.locator("#order")).toContainText("REJECTED");
-  await page.screenshot({ path: "docs/demo-desktop.png", fullPage: true });
+  await page.screenshot({
+    path: info.outputPath("desktop.png"),
+    fullPage: true,
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("h1")).toBeVisible();
   expect(
@@ -29,5 +32,8 @@ test("creación, confirmación, auditoría, duplicado y recuperación desde el n
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({ path: "docs/demo-mobile.png", fullPage: true });
+  await page.screenshot({
+    path: info.outputPath("mobile.png"),
+    fullPage: true,
+  });
 });

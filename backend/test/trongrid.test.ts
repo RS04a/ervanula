@@ -373,6 +373,7 @@ test("configuración y selección de adaptadores: defaults, aliases y red/endpoi
   try {
     delete process.env.PAYMENT_PROVIDER;
     process.env.BLOCKCHAIN_PROVIDER = "simulated";
+    process.env.DATABASE_URL = "mysql://fixture@127.0.0.1:1/fixture";
     process.env.USDT_CONTRACT_ADDRESS = CONTRACT;
     delete process.env.TRC20_TOKEN_CONTRACT;
     process.env.TRON_NETWORK = "mainnet";

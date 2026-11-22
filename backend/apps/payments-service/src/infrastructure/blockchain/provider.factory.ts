@@ -6,7 +6,15 @@ import {
   TronGridHttp,
 } from "./trongrid-payment.provider";
 export function selectBlockchainProvider(
-  config: AppConfig,
+  config: Pick<
+    AppConfig,
+    | "provider"
+    | "network"
+    | "contract"
+    | "tronGridBaseUrl"
+    | "tronGridApiKey"
+    | "timeout"
+  >,
   http: TronGridHttp = fetch,
 ): BlockchainProvider {
   if (config.provider === "trongrid")

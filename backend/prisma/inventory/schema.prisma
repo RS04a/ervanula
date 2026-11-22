@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/inventory-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("INVENTORY_DATABASE_URL")
+}
+model Product {
+  id String @id @default(uuid())
+  merchantId String
+  sku String @db.VarChar(64)
+  description String
+  asset String @db.VarChar(8)
+  priceBase String @db.VarChar(64)
+  scale Int
+  minimum Int
+  active Boolean @default(true)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  balance StockBalance?
+  movements StockMovement[]
+  reservations StockReservation[]
+  @@unique([merchantId, sku])
+  @@index([merchantId, id])
+}
+model StockBalance {
+  productId String @id
+  product Product @relation(fields: [productId], references: [id])
+  available Int @default(0)
+  reserved Int @default(0)
+}
+model StockMovement {
+  id String @id @default(uuid())
+  merchantId String
+  productId String
+  product Product @relation(fields: [productId], references: [id])
+  userId String
+  reference String
+  kind String
+  quantity Int
+  reason String
+  createdAt DateTime @default(now())
+  @@unique([merchantId, reference])
+  @@index([merchantId, createdAt, id])
+  @@index([productId, createdAt])
+}
+model StockReservation {
+  id String @id @default(uuid())
+  merchantId String
+  saleId String
+  productId String
+  product Product @relation(fields: [productId], references: [id])
+  quantity Int
+  status String @db.VarChar(12)
+  @@unique([merchantId, saleId, productId])
+}
+model ImportReceipt {
+  merchantId String
+  reference String
+  productId String
+  @@id([merchantId, reference])
+}
+model Outbox {
+  id String @id
+  topic String
+  payload Json
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+  leaseUntil DateTime?
+  leaseToken String?
+  @@index([sentAt, leaseUntil, createdAt])
+}

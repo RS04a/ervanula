@@ -1,0 +1,1 @@
+ALTER TABLE `ImportRowResult` ADD COLUMN `retryable` BOOLEAN NOT NULL DEFAULT false;

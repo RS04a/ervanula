@@ -1,8 +1,10 @@
+import { event } from "../../../../../libs/full-app/events";
 import { PrismaClient, Prisma } from "@prisma/client";
 import {
   BlockchainTransaction,
   Transfer,
   PaymentOrder,
+  PaymentStatus,
   PaymentAuditEvent,
 } from "../../domain/entities/models";
 import {
@@ -23,7 +25,10 @@ export class PrismaPaymentRepositories
     PaymentAuditRepository,
     BlockchainTransactionRepository
 {
-  constructor(readonly client: PrismaClient) {}
+  constructor(
+    readonly client: PrismaClient,
+    private readonly fullApp = false,
+  ) {}
   async onModuleDestroy() {
     await this.client.$disconnect();
   }
@@ -32,6 +37,23 @@ export class PrismaPaymentRepositories
       this.client.paymentOrder.create({ data: order }),
       this.client.paymentAuditEvent.create({ data: eventData(event) }),
     ]);
+  }
+  page(merchantId: string, skip: number, status?: PaymentStatus, take = 25) {
+    return this.client.paymentOrder.findMany({
+      where: { merchantId, status },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip,
+      take,
+    });
+  }
+  due() {
+    return this.client.paymentOrder.findFirst({
+      where: {
+        status: { in: ["PENDING", "DETECTED", "CONFIRMING"] },
+        expiresAt: { lte: new Date() },
+      },
+      orderBy: { expiresAt: "asc" },
+    });
   }
   get(id: string) {
     return this.client.paymentOrder.findUnique({ where: { id } });
@@ -86,11 +108,15 @@ export class PrismaPaymentRepositories
   ) {
     try {
       await this.client.$transaction(async (db) => {
-        const { id, ...data } = order;
+        const { id, version, ...data } = order;
         // Optimistic condition prevents concurrent verification overwriting terminal state.
         const result = await db.paymentOrder.updateMany({
-          where: { id, status: events[0]?.previousStatus ?? order.status },
-          data,
+          where: {
+            id,
+            version,
+            status: events[0]?.previousStatus ?? order.status,
+          },
+          data: { ...data, version: { increment: 1 } },
         });
         if (result.count !== 1)
           throw new PaymentError(
@@ -120,6 +146,30 @@ export class PrismaPaymentRepositories
           });
         }
         await this.writeEvents(db, events);
+        const late = events.some((entry) => entry.eventType === "LATE_PAYMENT");
+        const topic = late
+          ? "payment.late.v1"
+          : order.status === "CONFIRMED"
+            ? "payment.confirmed.v1"
+            : order.status === "EXPIRED" &&
+                events[0]?.previousStatus !== "EXPIRED"
+              ? "payment.expired.v1"
+              : null;
+        if (this.fullApp && topic) {
+          const message = event(topic, order.merchantId, order.saleId, {
+            saleId: order.saleId,
+            orderId: id,
+            asset: order.tokenSymbol,
+            network: order.network,
+            contract: order.tokenContract,
+            amountBase: order.amountBaseUnits,
+            scale: order.tokenDecimals,
+            transactionHash: order.transactionHash ?? "",
+          });
+          await db.outbox.create({
+            data: { id: message.eventId, topic, payload: message },
+          });
+        }
       });
     } catch (error) {
       if (

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 test("modo TronGrid muestra lectura real y desactiva hashes sintéticos sin consultar internet", async ({
   page,
 }) => {
-  await page.route("http://localhost:3000/api/health", (route) =>
+  await page.route("**/api/health", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",

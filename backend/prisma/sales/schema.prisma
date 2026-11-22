@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/sales-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("SALES_DATABASE_URL")
+}
+model Sale {
+  id String @id
+  merchantId String
+  userId String
+  asset String @db.VarChar(8)
+  scale Int
+  totalBase String @default("0") @db.VarChar(64)
+  status String @db.VarChar(28)
+  method String? @db.VarChar(8)
+  paymentId String? @unique
+  paymentNetwork String?
+  paymentContract String?
+  cashSessionId String?
+  exception String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  completedAt DateTime?
+  leaseToken String?
+  leaseUntil DateTime?
+  retryAt DateTime?
+  items SaleItem[]
+  @@index([merchantId, createdAt, id])
+  @@index([status, retryAt, leaseUntil])
+}
+model SaleItem {
+  saleId String
+  productId String
+  sku String
+  description String
+  priceBase String @db.VarChar(64)
+  scale Int
+  quantity Int
+  sale Sale @relation(fields: [saleId], references: [id])
+  @@id([saleId, productId])
+}
+model Outbox {
+  id String @id
+  topic String
+  payload Json
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+  leaseUntil DateTime?
+  leaseToken String?
+  @@index([sentAt, leaseUntil, createdAt])
+}
+model ProcessedEvent {
+  eventId String @id
+  createdAt DateTime @default(now())
+}

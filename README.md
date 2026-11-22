@@ -1,4 +1,79 @@
-# ARVELUNA — Entrega 1
+# ARVELUNA · Aplicación universitaria para pequeños comercios
+
+Identidad, comercio, inventario, ventas, caja, pagos TRC-20, importación y análisis explicable. **Integrantes:** Alberto Russell y Yalal Ajram Elneser.
+
+## Ejecutar la aplicación completa
+
+Requisitos: Node.js 24 o superior, npm 11 y Docker con Compose. El perfil completo usa sus propios esquemas, credenciales, puertos y volúmenes. La interfaz nueva se abre en `/app.html`. La página `/` conserva la demostración histórica de Payments.
+
+```bash
+npm ci
+npm run full:env
+npm run full:up
+npm run db:generate
+npm run full:migrate
+```
+
+En `.env.full-app`, agregar `BOOTSTRAP_MERCHANT_ID` (slug minúsculo), `BOOTSTRAP_MERCHANT_NAME`, `BOOTSTRAP_EMAIL` y `BOOTSTRAP_PASSWORD` (12 caracteres o más). El aprovisionamiento respeta un administrador y un comercio existentes. El archivo privado tiene permisos 0600 en sistemas POSIX y está excluido de Git.
+
+```bash
+npm run full:provision
+npm run full:dev
+```
+
+En otra terminal, ejecutar `npm run full:frontend` y abrir **http://localhost:5173/app.html**. `npm run build` seguido de `npm run full:start` ejecuta el backend compilado. `Ctrl+C` detiene los procesos y `npm run full:stop` detiene los contenedores preservando sus datos.
+
+| Componente | Puerto local | Puerto de prueba |
+| --- | ---: | ---: |
+| Frontend | 5173 | 15173 |
+| Gateway | 3000 | 13000 |
+| Payments | 3001 | 13001 |
+| Identity | 3011 | 13011 |
+| Merchant | 3012 | 13012 |
+| Inventory | 3013 | 13013 |
+| Sales | 3014 | 13014 |
+| Cash Register | 3015 | 13015 |
+| Import | 3017 | 13017 |
+| Analytics | 3018 | 13018 |
+| MySQL | 33376 | 43376 |
+| RabbitMQ | 35772 | 45772 |
+| Consola RabbitMQ | 35773 | 55772 |
+
+Cada proceso HTTP publica Swagger en `/docs` y `/docs-json`. El Gateway concentra la API pública y expone `/api/health`. Con Vite activo, **http://localhost:5173/docs** permite probar los endpoints de escritura desde el origen autorizado. Las operaciones protegidas en Swagger interno exigen credenciales. La consola de RabbitMQ escucha en loopback y usa el usuario local `arveluna` y la clave del perfil.
+
+## Pruebas en el perfil aislado
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm test
+npm run full:env -- test
+npm run full:up -- test
+npm run full:migrate -- test
+npm run test:legacy
+npm run full:start -- test
+```
+
+`test:legacy` ejecuta las suites histórica HTTP y de navegador contra un esquema nuevo dentro del MySQL de pruebas. Usa Gateway 23000, Payments 23001 y frontend 25173.
+
+Con el backend de prueba en marcha, ejecutar `npm run full:test -- test`. En otra terminal iniciar `npm run full:frontend -- test` y ejecutar `npm run full:browser -- test` tras concluir la prueba de caída del broker. Playwright usa Chrome instalado en macOS, un `CHROME_PATH` explícito o Chromium de Playwright según disponibilidad. El perfil de prueba crea comercios únicos y deja sus registros para inspección. Detener infraestructura con `npm run full:stop -- test`.
+
+## Documentación y demo
+
+- [Guion A–D](docs/full-app/DEMO.md), [evidencia inicial](docs/full-app/PROGRESO.md) y [cierre auditado](docs/full-app/CIERRE_AUDITADO.md) y [verificación final](docs/full-app/VERIFICACION_FINAL.md).
+- [C4 Contexto](docs/full-app/C4-contexto.md), [Contenedores](docs/full-app/C4-contenedores.md), [Componentes](docs/full-app/C4-componentes.md), [propiedad de datos](docs/full-app/C4-datos.md), [Payments](docs/full-app/C4-payments.md), [dependencias de código](docs/full-app/Clean-Architecture.md) y [secuencia](docs/full-app/secuencia.md).
+- [Informe técnico y mapa de archivos](docs/full-app/TECNICO.md) y [contratos, eventos y permisos](docs/full-app/CONTRATOS.md).
+- [PDF técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf), [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) y [PDF de defensa](docs/full-app/entrega/ARVELUNA_Defensa.pdf).
+- [Guía ArveCoins](docs/full-app/ARVECOINS.md). El checkout USDT usa el simulador por defecto. El perfil ARVE de testnet es opcional e independiente.
+
+Para regenerar los documentos con capturas de prueba, ejecutar `npm run full:documents`. Desde el repositorio, `npm run full:package` genera `ARVELUNA_App_Completa.zip` y verifica su lista e integridad. Requiere Git, `zip` y `unzip`.
+
+La aplicación es de alcance académico. Los diagnósticos y recomendaciones operan sobre cortes con marca de tiempo. Las simulaciones exponen sus supuestos y preservan las operaciones reales. Payments verifica transferencias públicas mediante hashes y conserva auditoría.
+
+---
+
+# Entrega 1 histórica · Payments
 
 MVP universitario de verificación de pagos USDT TRC-20. Crea órdenes, consulta transferencias públicas mediante proveedor simulado o adaptador TronGrid de solo lectura, valida evidencia, controla estados y conserva auditoría. No administra ventas, inventario, caja ni identidad; `saleId` y `merchantId` son referencias externas. No mueve ni custodia fondos.
 

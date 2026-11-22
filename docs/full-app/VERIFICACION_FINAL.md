@@ -1,0 +1,22 @@
+# Verificación final de la aplicación universitaria
+
+22 de noviembre de 2026, America/Bogota. Base revisada `14cc1b8` en `main`. El índice estaba vacío y el remoto `origin` se conservó. El trabajo local previo de la aplicación completa y su informe de auditoría siguieron como base.
+
+| Comprobación | Resultado |
+| --- | --- |
+| Infraestructura | MySQL 8.4 y RabbitMQ saludables en el proyecto Compose `arveluna-full-test`. Guardas de ocho esquemas y usuarios, MySQL 43376, RabbitMQ 45772 y frontend 15173 verificadas antes de escribir. `full:migrate -- test` validó las migraciones aplicadas de los ocho dueños. `full:provision -- test` se ejecutó dos veces para la misma identidad efímera. |
+| Histórica HTTP | 3 pruebas de `test:e2e`, incluidos respuestas de Swagger, control de fallos del upstream y fixtures TronGrid. El ejecutor `test:legacy` provisiona un esquema y usuario nuevos en MySQL de pruebas y aplica sus dos migraciones. |
+| Histórica navegador | 3 pruebas completas. Incluyen pago y fallos, modo TronGrid interceptado y Mermaid. Puertos Gateway 23000, Payments 23001 y navegador 25173. Las capturas de esta suite quedan en `test-results/legacy`. |
+| Aplicación completa HTTP/SQL/RabbitMQ | 1 prueba agrupadora y 9 subcasos. Flujos A–D, controles negativos, concurrencia, caída/reanudación del broker, ACK, DLQ, expiración, pago tardío, límite Analytics y COP/USDT/ARVE en simulación. El Gateway y ocho servicios informaron salud. |
+| Aplicación completa navegador | 2 proyectos Playwright, escritorio y emulación móvil, con A–D, filtros, recarga y recuperación. |
+| Instalación fresca y paquete | En una extracción limpia del ZIP pasaron npm ci, generación de ocho clientes Prisma, lint, typecheck, build y 57 unitarias. El primer intento bajo sandbox requería acceso de Prisma a su caché de motores y se repitió con los permisos del entorno. El manifiesto y la integridad ZIP se comprobaron con el empaquetador y unzip. |
+
+Los siete diagramas Mermaid se renderizaron y se contrastaron con los protocolos, autorización y responsabilidades implementados. Las 16 páginas del informe y las 12 láminas de ambos formatos se revisaron visualmente con Poppler y LibreOffice.
+
+## Regresión corregida
+
+La demo histórica construía la URL del Gateway con el puerto 3000. En un perfil aislado podía apuntar al proceso local equivocado. El frontend usa rutas relativas y Vite mantiene el proxy tanto en desarrollo como en vista previa. El mock de Playwright sigue la ruta sin fijar el host. El ejecutor histórico comprueba el puerto publicado por Compose, asigna permisos al esquema generado y conserva el esquema después de la prueba. No se alteraron las reglas de venta, caja, reserva o verificación.
+
+## Pendientes externos
+
+TronGrid se comprobó mediante fixtures en las suites históricas. Shasta y ARVE se comprobaron con el proveedor simulado. La comprobación en la red pública se registra aparte. La caracterización detallada de errores y concurrencia se conserva en [Cierre auditado](CIERRE_AUDITADO.md).

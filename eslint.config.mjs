@@ -9,7 +9,7 @@ export default ts.config(
   js.configs.recommended,
   ...ts.configs.recommended,
   {
-    files: ["frontend/src/*.js"],
+    files: ["frontend/src/**/*.js"],
     languageOptions: {
       globals: {
         FormData: "readonly",
@@ -17,6 +17,11 @@ export default ts.config(
         window: "readonly",
         navigator: "readonly",
         fetch: "readonly",
+        Blob: "readonly",
+        FileReader: "readonly",
+        URL: "readonly",
+        Uint8Array: "readonly",
+        btoa: "readonly",
         URLSearchParams: "readonly",
       },
     },

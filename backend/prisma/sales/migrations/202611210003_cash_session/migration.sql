@@ -1,0 +1,1 @@
+ALTER TABLE `Sale` ADD COLUMN `cashSessionId` VARCHAR(191) NULL;

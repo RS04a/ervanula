@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { assertLegacyPaymentsDatabase } from "../libs/contracts/environment";
+assertLegacyPaymentsDatabase(process.env.DATABASE_URL);
 const client = new PrismaClient();
 async function seed() {
   await client.paymentOrder.upsert({

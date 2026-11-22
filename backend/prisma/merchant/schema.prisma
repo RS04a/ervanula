@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@arveluna/merchant-db"
+}
+datasource db {
+  provider = "mysql"
+  url = env("MERCHANT_DATABASE_URL")
+}
+model Merchant {
+  id String @id
+  name String
+  updatedAt DateTime @updatedAt
+  wallets Wallet[]
+}
+model Wallet {
+  merchantId String
+  network String
+  asset String
+  address String
+  updatedAt DateTime @updatedAt
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  @@id([merchantId, network, asset])
+}

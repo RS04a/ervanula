@@ -43,6 +43,10 @@ export class CreatePaymentOrder {
       merchantId: string;
       recipientAddress: string;
       amount: string;
+      id?: string;
+      tokenSymbol?: string;
+      tokenContract?: string;
+      network?: string;
     },
     requestId: string,
   ) {
@@ -59,13 +63,13 @@ export class CreatePaymentOrder {
     }
     const now = new Date();
     const order: PaymentOrder = {
-      id: randomUUID(),
+      id: input.id ?? randomUUID(),
       saleId: input.saleId,
       merchantId: input.merchantId,
       recipientAddress: recipient,
-      network: this.config.network,
-      tokenSymbol: "USDT",
-      tokenContract: this.config.contract,
+      network: input.network ?? this.config.network,
+      tokenSymbol: input.tokenSymbol ?? "USDT",
+      tokenContract: input.tokenContract ?? this.config.contract,
       amountBaseUnits: toBaseUnits(input.amount),
       tokenDecimals: 6,
       status: "PENDING",
