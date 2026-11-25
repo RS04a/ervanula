@@ -4,10 +4,10 @@ Cada aplicación backend se ejecuta en su propio proceso NestJS. Ocho esquemas l
 
 ```mermaid
 flowchart TB
-  user["Administrador / Cajero<br/>[Persona]"]
+  user["Visitante / Administrador / Cajero<br/>[Personas]"]
   tr["TronGrid<br/>[Externo · HTTPS]"]
   subgraph arveluna["ARVELUNA · límite del sistema"]
-    ui["Frontend<br/>[Contenedor · Vite/HTML/JS/Tailwind]"]
+    ui["Frontend<br/>[React · React Router · Vite · Tailwind]<br/>Portada / · panel /admin"]
     gw["API Gateway<br/>[Contenedor · NestJS]"]
     id["Identity<br/>[NestJS · sesiones y roles]"]
     me["Merchant<br/>[NestJS · perfil y billeteras]"]
@@ -19,7 +19,7 @@ flowchart TB
     an["Analytics<br/>[NestJS · diagnósticos y simulaciones]"]
     mq[["RabbitMQ<br/>[Contenedor · eventos AMQP 0-9-1]"]]
     db[("MySQL 8.4<br/>[Contenedor de datos]<br/>8 esquemas / 8 usuarios")]
-    ui -->|"JSON + cookie [HTTP]"| gw
+    ui -->|"Panel: /api, JSON y cookie [HTTP]"| gw
     gw -->|"Autenticación / usuarios [HTTP]"| id
     gw -->|"Configuración [HTTP]"| me
     gw -->|"Catálogo / movimientos [HTTP]"| inv
@@ -38,7 +38,7 @@ flowchart TB
     mq -->|"Confirmación, expiración y pago tardío [AMQP]"| sa
     mq -->|"Invalida proyecciones [AMQP]"| an
   end
-  user -->|"Opera [navegador]"| ui
+  user -->|"Consulta portada u opera con sesión [HTTP]"| ui
   pa -->|"Lee transacción, recibos y altura [HTTPS]"| tr
   classDef external fill:#eef3f8,stroke:#53677d,color:#182637
   classDef store fill:#eaf2d8,stroke:#658642,color:#25351b
@@ -58,4 +58,4 @@ La [vista de propiedad de datos](C4-datos.md) identifica los ocho esquemas y el 
 
 **Leyenda.** Rectángulos verdes representan aplicaciones, siluetas verdes claras representan infraestructura o datos y azul claro representa actores externos. Las flechas etiquetadas identifican el protocolo y la responsabilidad. La tabla de propiedad en el informe técnico identifica cada esquema.
 
-Vite reenvía `/api` al Gateway del perfil activo. Payments consultó el recibo solidificado de ARVE por HTTPS en Shasta.
+Vite reenvía `/api` al Gateway. La portada no consulta operaciones. Payments leyó el recibo ARVE en Shasta.

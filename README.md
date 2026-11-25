@@ -4,7 +4,7 @@ Identidad, comercio, inventario, ventas, caja, pagos TRC-20, importación y aná
 
 ## Ejecutar la aplicación completa
 
-Requisitos: Node.js 24 o superior, npm 11 y Docker con Compose. El perfil completo usa sus propios esquemas, credenciales, puertos y volúmenes. La interfaz nueva se abre en `/app.html`. La página `/` conserva la demostración histórica de Payments.
+Requisitos: Node.js 24 o superior, npm 11 y Docker con Compose. El perfil completo usa sus propios esquemas, credenciales, puertos y volúmenes. El frontend usa React, React Router, Vite y Tailwind. La portada pública está en `/` y el panel protegido empieza en `/admin/login`. La demostración histórica de Payments está en `/legacy.html`.
 
 ```bash
 npm ci
@@ -21,7 +21,7 @@ npm run full:provision
 npm run full:dev
 ```
 
-En otra terminal, ejecutar `npm run full:frontend` y abrir **http://localhost:5173/app.html**. `npm run build` seguido de `npm run full:start` ejecuta el backend compilado. `Ctrl+C` detiene los procesos y `npm run full:stop` detiene los contenedores preservando sus datos.
+En otra terminal, ejecutar `npm run full:frontend` y abrir **http://localhost:5173/**. `npm run build` seguido de `npm run full:start` ejecuta el backend compilado. `Ctrl+C` detiene los procesos y `npm run full:stop` detiene los contenedores preservando sus datos.
 
 | Componente | Puerto local | Puerto de prueba |
 | --- | ---: | ---: |
@@ -59,6 +59,16 @@ npm run full:start -- test
 
 Con el backend de prueba en marcha, ejecutar `npm run full:test -- test`. En otra terminal iniciar `npm run full:frontend -- test` y ejecutar `npm run full:browser -- test` tras concluir la prueba de caída del broker. Playwright usa Chrome instalado en macOS, un `CHROME_PATH` explícito o Chromium de Playwright según disponibilidad. El perfil de prueba crea comercios únicos y deja sus registros para inspección. Detener infraestructura con `npm run full:stop -- test`.
 
+## Rutas del frontend
+
+- `/` presenta el proyecto, al equipo y los módulos sin requerir sesión.
+- `/admin/login` inicia sesión. `/admin/dashboard` abre el resumen protegido.
+- `/admin/inventario`, `/admin/inventario/productos`, `/admin/ventas`, `/admin/caja`, `/admin/pagos`, `/admin/importacion`, `/admin/analisis` y `/admin/configuracion` abren los módulos según el rol.
+- `/app.html` redirige al panel y conserva los enlaces anteriores por fragmento de URL.
+- `/legacy.html` abre la interfaz histórica con el perfil de Payments correspondiente.
+
+React Router conserva la ruta original al pedir inicio de sesión. Vite sirve la misma aplicación al acceder directamente o recargar una ruta de `/admin`. El navegador consulta `/api` en el mismo origen. La sesión y los permisos se validan en el Gateway y en los servicios. La [vista C4 del frontend](docs/full-app/C4-frontend.md) detalla esas fronteras.
+
 ## Documentación y demo
 
 - [Guion A–D](docs/full-app/DEMO.md), [evidencia inicial](docs/full-app/PROGRESO.md) y [cierre auditado](docs/full-app/CIERRE_AUDITADO.md) y [verificación final](docs/full-app/VERIFICACION_FINAL.md).
@@ -95,7 +105,7 @@ npm run db:seed
 npm run dev
 ```
 
-Abrir **http://localhost:5173**. Swagger público: **http://localhost:3000/docs**. Swagger interno: http://localhost:3001/docs. Los procesos se enlazan a loopback. `Ctrl+C` detiene las aplicaciones; `docker compose stop` detiene MySQL preservando los datos.
+Abrir **http://localhost:5173/legacy.html**. Swagger público: **http://localhost:3000/docs**. Swagger interno: http://localhost:3001/docs. Los procesos se enlazan a loopback. `Ctrl+C` detiene las aplicaciones; `docker compose stop` detiene MySQL preservando los datos.
 
 `npm ci` instala las versiones exactas del lockfile. `npm run env:init` crea un `.env` privado con contraseñas aleatorias y no sobrescribe un `.env` existente. También puede copiarse `.env.example` manualmente y completar MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD y DATABASE_URL coherentemente. No ejecutar migraciones contra bases ajenas al proyecto.
 

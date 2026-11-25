@@ -1,3 +1,4 @@
+import { adminUrl } from "./routes.js";
 import {
   button,
   date,
@@ -12,6 +13,9 @@ import {
   pill,
   short,
   table,
+  split,
+  networkName,
+  callout,
 } from "./ui.js";
 
 export async function settings(ctx) {
@@ -19,56 +23,72 @@ export async function settings(ctx) {
   const merchant = await get("merchant/profile");
   const users = admin ? await get(`identity/users?offset=${state.page}`) : [];
   return [
-    heading("Configuración", merchant.name),
-    panel(
-      "Perfil del comercio",
-      el("p", {}, merchant.name),
-      admin
-        ? form(
-            "Guardar perfil",
-            [
-              [
-                "name",
-                "Nombre del comercio",
-                { value: merchant.name, maxlength: 120 },
-              ],
-            ],
-            async (data) => {
-              await ctx.post("merchant/profile", data);
-              await ctx.refreshIdentity();
-              go({});
-            },
-          )
-        : null,
+    heading(
+      "Configuración",
+      merchant.name,
+      "Gestiona el perfil, las billeteras receptoras y los accesos.",
     ),
-    panel(
-      "Billeteras receptoras",
-      table(
-        ["Red", "Activo", "Dirección"],
-        merchant.wallets.map((w) => [w.network, w.asset, w.address]),
-      ),
-      admin
-        ? form(
-            "Guardar billetera",
-            [
+    split(
+      panel(
+        "Perfil del comercio",
+        admin
+          ? form(
+              "Guardar perfil",
               [
-                "network",
-                "Red TRON",
-                { choices: ["mainnet", "nile", "shasta"] },
+                [
+                  "name",
+                  "Nombre del comercio",
+                  { value: merchant.name, maxlength: 120 },
+                ],
               ],
-              ["asset", "Activo", { choices: ["USDT", "ARVE"] }],
-              ["address", "Dirección pública", { maxlength: 64 }],
-            ],
-            async (data) => {
-              if (
-                !window.confirm("¿Guardar esta dirección para futuras órdenes?")
-              )
-                return;
-              await ctx.post("merchant/wallets", data);
-              go({});
-            },
-          )
-        : null,
+              async (data) => {
+                await ctx.post("merchant/profile", data);
+                await ctx.refreshIdentity();
+                go({});
+              },
+            )
+          : el("p", { class: "note" }, merchant.name),
+      ),
+      panel(
+        "Billeteras receptoras",
+        table(
+          ["Red", "Activo", "Dirección"],
+          merchant.wallets.map((w) => [
+            networkName(w.network),
+            w.asset,
+            w.address,
+          ]),
+        ),
+        admin
+          ? form(
+              "Guardar billetera",
+              [
+                [
+                  "network",
+                  "Red TRON",
+                  {
+                    choices: ["mainnet", "nile", "shasta"].map((network) => [
+                      network,
+                      networkName(network),
+                    ]),
+                  },
+                ],
+                ["asset", "Activo", { choices: ["USDT", "ARVE"] }],
+                ["address", "Dirección pública", { maxlength: 64 }],
+              ],
+              async (data) => {
+                if (
+                  !window.confirm(
+                    "¿Guardar esta dirección para futuras órdenes?",
+                  )
+                )
+                  return;
+                await ctx.post("merchant/wallets", data);
+                go({});
+              },
+            )
+          : null,
+      ),
     ),
     admin
       ? panel(
@@ -131,12 +151,32 @@ export async function imports(ctx) {
   if (job?.status === "RUNNING") ctx.poll();
   const reference = id();
   return [
-    heading("Importar productos", "CSV"),
+    heading(
+      "Importar productos",
+      "Importación CSV",
+      "Carga un archivo, revisa sus filas y aplica las entradas válidas.",
+    ),
+    el(
+      "ol",
+      { class: "import-steps", "aria-label": "Etapas de importación" },
+      ["Cargar CSV", "Revisar vista previa", "Aplicar al inventario"].map(
+        (label, index) =>
+          el(
+            "li",
+            {
+              "aria-current":
+                index === (job ? (job.status === "PREVIEW" ? 1 : 2) : 0)
+                  ? "step"
+                  : null,
+            },
+            el("span", { "aria-hidden": "true" }, index + 1),
+            label,
+          ),
+      ),
+    ),
     panel(
       "Cargar archivo",
-      el(
-        "p",
-        { class: "note" },
+      callout(
         "UTF-8 · hasta 250 filas y 60 kB. Los SKU existentes se rechazan; las existencias iniciales se registran como entradas.",
       ),
       button("Descargar plantilla", () =>
@@ -145,7 +185,10 @@ export async function imports(ctx) {
           const link = URL.createObjectURL(
             new Blob([template.content], { type: "text/csv;charset=utf-8" }),
           );
-          el("a", { href: link, download: template.filename }).click();
+          const download = document.createElement("a");
+          download.href = link;
+          download.download = template.filename;
+          download.click();
           window.setTimeout(() => URL.revokeObjectURL(link), 1000);
         }),
       ),
@@ -163,7 +206,7 @@ export async function imports(ctx) {
             id: reference,
             csv,
           });
-          window.location.hash = `imports/${preview.id}`;
+          ctx.navigate(adminUrl("imports", preview.id));
         },
       ),
     ),
@@ -235,7 +278,7 @@ export async function imports(ctx) {
               short(j.id),
               date(j.createdAt),
               pill(j.status),
-              el("a", { href: `#imports/${j.id}` }, "Abrir importación"),
+              el("a", { href: adminUrl("imports", j.id) }, "Abrir importación"),
             ]),
           )
         : empty(),

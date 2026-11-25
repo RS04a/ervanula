@@ -1,13 +1,17 @@
+import { adminUrl } from "./routes.js";
 import {
   button,
+  callout,
   date,
   el,
   empty,
   form,
   heading,
   money,
+  metricCard,
   panel,
   pill,
+  paymentProfiles,
   short,
   table,
 } from "./ui.js";
@@ -39,61 +43,128 @@ function controls(ctx) {
   );
 }
 export async function dashboard(ctx) {
-  const [report, register, payments] = await Promise.all([
+  const [report, register, payments, recent] = await Promise.all([
     ctx.get("analytics/diagnostics?days=30"),
     ctx.get("cash/register"),
     ctx.get("payments/settings"),
+    ctx.get("sales/sales?offset=0"),
   ]);
+  const totals = Object.entries(report.salesByAsset);
   return [
-    heading("Dashboard", "Resumen del comercio"),
-    updated(report),
+    heading(
+      "Resumen",
+      "Panel del comercio",
+      "Ventas, efectivo y alertas de inventario.",
+    ),
+    el(
+      "div",
+      { class: "status-strip" },
+      updated(report),
+      ...paymentProfiles(payments),
+    ),
     el(
       "div",
       { class: "cards" },
+      metricCard(
+        "Ventas completadas",
+        totals.reduce((count, [, row]) => count + row.count, 0),
+        "sales",
+        "Últimos 30 días",
+        "success",
+      ),
+      metricCard(
+        "Efectivo esperado",
+        register.session ? money(register.session.expectedBase, "COP") : "—",
+        "cash",
+        register.session ? "Caja abierta" : "Caja cerrada",
+      ),
+      metricCard(
+        "Ventas pendientes",
+        report.pendingSales.length,
+        "clock",
+        "En el corte analítico",
+      ),
+      metricCard(
+        "Stock bajo mínimo",
+        report.lowStock.length,
+        "alert",
+        "Productos en el corte",
+        "warning",
+      ),
+    ),
+    el(
+      "div",
+      { class: "split split-emphasis" },
       panel(
-        "Ventas completadas · 30 días",
-        Object.entries(report.salesByAsset).length
-          ? Object.entries(report.salesByAsset).map(([asset, data]) =>
-              el("p", { class: "metric" }, money(data.amountBase, asset)),
+        "Ventas por activo",
+        totals.length
+          ? el(
+              "dl",
+              { class: "amount-list" },
+              totals.map(([asset, row]) =>
+                el(
+                  "div",
+                  {},
+                  el("dt", {}, asset),
+                  el("dd", {}, money(row.amountBase, asset)),
+                ),
+              ),
             )
           : empty("Aún no hay ventas completadas en el periodo."),
       ),
       panel(
-        "Efectivo esperado",
+        "Alertas de inventario",
+        report.lowStock.length
+          ? table(
+              ["SKU", "Disponible", "Mínimo"],
+              report.lowStock
+                .slice(0, 5)
+                .map((p) => [p.sku, p.available, p.minimum]),
+            )
+          : empty("Sin productos bajo el mínimo."),
         el(
-          "p",
-          { class: "metric" },
-          money(register.session?.expectedBase, "COP"),
+          "div",
+          { class: "actions" },
+          el("a", { href: adminUrl("diagnostics") }, "Ver diagnóstico"),
         ),
-        el(
-          "p",
-          { class: "note" },
-          register.session ? "Caja abierta" : "Caja cerrada",
-        ),
-      ),
-      panel(
-        "Inventario bajo mínimo",
-        el("p", { class: "metric" }, report.lowStock.length),
-        el("a", { href: "#diagnostics" }, "Ver diagnóstico"),
-      ),
-      panel(
-        "Pagos TRC-20",
-        pill(payments.provider === "simulated" ? "Simulación" : "TronGrid"),
-        el("p", {}, payments.network),
       ),
     ),
     panel(
-      "Ventas pendientes",
-      table(
-        ["Venta", "Estado", "Monto", "Acción"],
-        report.pendingSales.map((s) => [
-          short(s.id),
-          pill(s.status),
-          money(s.totalBase, s.asset),
-          el("a", { href: `#sales/${s.id}` }, "Abrir venta"),
-        ]),
+      "Ventas recientes",
+      recent.length
+        ? table(
+            ["Venta", "Estado", "Monto", "Fecha", "Acción"],
+            recent
+              .slice(0, 5)
+              .map((sale) => [
+                short(sale.id),
+                pill(sale.status),
+                money(sale.totalBase, sale.asset, sale.scale),
+                date(sale.createdAt),
+                el("a", { href: adminUrl("sales", sale.id) }, "Abrir venta"),
+              ]),
+          )
+        : empty("Aún no hay ventas registradas."),
+      el(
+        "div",
+        { class: "actions" },
+        el("a", { href: adminUrl("sales") }, "Ver historial de ventas"),
       ),
     ),
+    report.pendingSales.length
+      ? panel(
+          "Operaciones pendientes",
+          table(
+            ["Venta", "Estado", "Monto", "Acción"],
+            report.pendingSales.map((sale) => [
+              short(sale.id),
+              pill(sale.status),
+              money(sale.totalBase, sale.asset),
+              el("a", { href: adminUrl("sales", sale.id) }, "Abrir venta"),
+            ]),
+          ),
+        )
+      : null,
     button("Reconciliar datos", () => ctx.action("analytics/reconcile")),
   ];
 }
@@ -102,7 +173,11 @@ export async function diagnostics(ctx) {
     `analytics/diagnostics?days=${ctx.state.days ?? 30}`,
   );
   return [
-    heading("Diagnósticos", "Análisis"),
+    heading(
+      "Diagnósticos",
+      "Análisis",
+      "Consulta ventas, caja, existencias y órdenes del corte.",
+    ),
     updated(data),
     controls(ctx),
     panel(
@@ -159,7 +234,7 @@ export async function diagnostics(ctx) {
       table(
         ["Orden", "Estado", "Código", "Fecha"],
         data.paymentFailures.map((p) => [
-          el("a", { href: `#payments/${p.id}` }, short(p.id)),
+          el("a", { href: adminUrl("payments", p.id) }, short(p.id)),
           pill(p.status),
           p.failureCode,
           date(p.updatedAt),
@@ -175,6 +250,7 @@ export async function simulation(ctx) {
   const data = ctx.state.simulation;
   return [
     heading("Simulaciones", "Escenarios"),
+    callout("El escenario no modifica las operaciones del comercio."),
     panel(
       "Supuestos del escenario",
       el(
@@ -279,7 +355,11 @@ export async function recommendations(ctx) {
     `analytics/recommendations?days=${ctx.state.days ?? 30}`,
   );
   return [
-    heading("Recomendaciones", "Análisis"),
+    heading(
+      "Recomendaciones",
+      "Análisis",
+      "Consulta reglas, umbrales y evidencia del corte.",
+    ),
     updated(data),
     controls(ctx),
     ...data.rules.map((rule) =>

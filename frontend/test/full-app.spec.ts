@@ -1,12 +1,43 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { merchantFixture } from "../../backend/test/full-app/fixtures";
 
 async function nav(page: Page, title: string) {
-  await page
-    .getByRole("navigation")
-    .getByRole("link", { name: title, exact: true })
-    .click();
+  const groups = {
+    Productos: "Inventario",
+    Diagnósticos: "Análisis",
+    Simulaciones: "Análisis",
+    Recomendaciones: "Análisis",
+  } as const;
+  const group = groups[title as keyof typeof groups];
+  const menu = page.getByRole("button", { name: "Menú", exact: true });
+  const main = page.getByRole("navigation", { name: "Navegación principal" });
+  const tabs = group
+    ? page.getByRole("navigation", { name: group, exact: true })
+    : null;
+  if (!tabs || !(await tabs.isVisible())) {
+    if (
+      (await menu.isVisible()) &&
+      (await menu.getAttribute("aria-expanded")) === "false"
+    )
+      await menu.click();
+    await main.getByRole("link", { name: group ?? title, exact: true }).click();
+  }
+  if (tabs) await tabs.getByRole("link", { name: title, exact: true }).click();
+}
+async function capture(page: Page, info: TestInfo, name: string) {
+  const viewportFits = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+  );
+  expect(
+    viewportFits,
+    `Vista ${name} sin desbordamiento de página`,
+  ).toBeTruthy();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: info.outputPath(`${name}.png`),
+    fullPage: true,
+  });
 }
 async function product(
   page: Page,
@@ -71,13 +102,17 @@ async function checkout(
 test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
   const person = await merchantFixture();
   page.on("dialog", (dialog) => dialog.accept());
-  await page.goto("/app.html");
+  await page.goto("/admin/login");
   await page.getByLabel("Correo", { exact: true }).fill(person.email);
   await page.getByLabel("Contraseña", { exact: true }).fill(person.password);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Resumen" })).toBeVisible();
+  const menu = page.getByRole("button", { name: "Menú", exact: true });
+  if (await menu.isVisible()) await menu.click();
   await expect(
-    page.getByText(/Administración de prueba · ADMIN/),
+    page
+      .getByRole("complementary")
+      .getByText("Administración de prueba", { exact: true }),
   ).toBeVisible();
   await test.step("A · efectivo desde la caja hasta el cierre", async () => {
     await nav(page, "Caja");
@@ -87,7 +122,9 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
       page.getByRole("heading", { name: "Caja abierta" }),
     ).toBeVisible();
     await product(page, "CAFE", "COP", "30", "4");
+    await capture(page, info, "inventario");
     await checkout(page, "COP", "CAFE · Café molido", "2");
+    await capture(page, info, "ventas");
     await nav(page, "Caja");
     await expect(
       page.getByText("160.00 COP", { exact: true }).first(),
@@ -95,6 +132,7 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await page.getByLabel("Efectivo contado (COP)").fill("155");
     await page.getByRole("button", { name: "Cerrar caja" }).click();
     await expect(page.getByText("−5.00 COP", { exact: true })).toBeVisible();
+    await capture(page, info, "caja");
   });
   await test.step("B · TRC-20 y auditoría", async () => {
     await nav(page, "Configuración");
@@ -105,6 +143,7 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await expect(
       page.getByRole("cell", { name: "TJRabPrwbZy45sbavfcjinPJC18kjpRTv8" }),
     ).toBeVisible();
+    await capture(page, info, "configuracion");
     await product(page, "DIGITAL", "USDT", "10", "2");
     await checkout(page, "USDT", "DIGITAL · Producto digital", "1");
     const url = page.url();
@@ -121,10 +160,7 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await expect(
       page.getByRole("cell", { name: "PAYMENT_VERIFIED" }),
     ).toBeVisible();
-    await page.screenshot({
-      path: `docs/full-app/capturas/${info.project.name}-pago.png`,
-      fullPage: true,
-    });
+    await capture(page, info, "pagos");
     await page.goto(url);
     await expect(
       page
@@ -156,10 +192,7 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await expect(
       page.getByRole("cell", { name: "APPLIED", exact: true }),
     ).toBeVisible();
-    await page.screenshot({
-      path: `docs/full-app/capturas/${info.project.name}-importacion.png`,
-      fullPage: true,
-    });
+    await capture(page, info, "importacion");
   });
   await test.step("D · diagnóstico, simulación y explicación", async () => {
     await nav(page, "Diagnósticos");
@@ -183,20 +216,16 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await expect(
       page.getByText("CAFE · disponible 2 · mínimo 5", { exact: true }),
     ).toBeVisible();
-    await nav(page, "Dashboard");
-    await expect(page.getByText("60.00 COP", { exact: true })).toBeVisible();
+    await capture(page, info, "analisis");
+    await nav(page, "Resumen");
+    const totals = page
+      .getByRole("heading", { name: "Ventas por activo", exact: true })
+      .locator("..");
+    await expect(totals.getByText("60.00 COP", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("10.000000 USDT", { exact: true }),
+      totals.getByText("10.000000 USDT", { exact: true }),
     ).toBeVisible();
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-      ),
-    ).toBeTruthy();
-    await page.screenshot({
-      path: `docs/full-app/capturas/${info.project.name}-dashboard.png`,
-      fullPage: true,
-    });
+    await capture(page, info, "resumen");
   });
   await test.step("filtros, paginación y recarga con la sesión activa", async () => {
     for (let index = 0; index < 25; index++) {
@@ -232,8 +261,209 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
       page.getByRole("cell", { name: "PAYMENT_VERIFIED" }),
     ).toBeVisible();
   });
+  if (
+    (await menu.isVisible()) &&
+    (await menu.getAttribute("aria-expanded")) === "false"
+  )
+    await menu.click();
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(
     page.getByRole("heading", { name: "Iniciar sesión" }),
   ).toBeVisible();
+});
+
+test("carga, vacío, error recuperable y permisos en el nuevo panel", async ({
+  page,
+}, info) => {
+  const { email, password } = await merchantFixture();
+  const cashier = `cashier-${randomUUID()}@example.test`;
+  const cashierPassword = randomUUID();
+  const menu = page.getByRole("button", { name: "Menú", exact: true });
+  const main = page.getByRole("main");
+  async function login(name: string, key: string) {
+    await page.getByLabel("Correo", { exact: true }).fill(name);
+    await page.getByLabel("Contraseña", { exact: true }).fill(key);
+    await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  }
+  await page.goto("/admin/login");
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const dashboardSales = (url: URL) =>
+    url.pathname === "/api/sales/sales" &&
+    url.searchParams.get("offset") === "0";
+  await page.route(
+    dashboardSales,
+    async (route) => {
+      await gate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  try {
+    await login(email, password);
+    await expect(main.getByRole("status")).toHaveText("Cargando…");
+    await expect(main).toHaveAttribute("aria-busy", "true");
+  } finally {
+    release();
+  }
+  await expect(
+    main.getByRole("heading", { name: "Resumen", exact: true }),
+  ).toBeVisible();
+  await expect(main.getByText("Aún no hay ventas registradas.")).toBeVisible();
+  await expect(main).toHaveAttribute("aria-busy", "false");
+
+  if (await menu.isVisible()) {
+    await menu.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("aria-expanded", "true");
+    await capture(page, info, "menu");
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveAttribute("aria-expanded", "false");
+    await expect(menu).toBeFocused();
+  }
+  const skip = page.getByRole("link", { name: "Ir al contenido" });
+  await expect(skip).toHaveCSS("opacity", "0");
+  await skip.focus();
+  await expect(skip).toHaveCSS("opacity", "1");
+  await page.keyboard.press("Enter");
+  await expect(main).toBeFocused();
+
+  await page.route(
+    "**/api/payments/settings",
+    (route) =>
+      route.fulfill({
+        status: 503,
+        json: { error: { message: "Servicio no disponible temporalmente" } },
+      }),
+    { times: 1 },
+  );
+  await nav(page, "Pagos");
+  await expect(main.getByRole("alert")).toHaveText(
+    "Servicio no disponible temporalmente",
+  );
+  await main.getByRole("button", { name: "Reintentar", exact: true }).click();
+  await expect(
+    main.getByText("ARVE · Shasta TESTNET · Simulación"),
+  ).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Órdenes" })).toBeVisible();
+
+  const response = await page.request.post("/api/identity/users", {
+    headers: { origin: "http://localhost:15173", "x-arveluna-csrf": "1" },
+    data: {
+      email: cashier,
+      password: cashierPassword,
+      displayName: "Caja de prueba",
+      role: "CASHIER",
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  if (
+    (await menu.isVisible()) &&
+    (await menu.getAttribute("aria-expanded")) === "false"
+  )
+    await menu.click();
+  await page.getByRole("button", { name: "Salir" }).click();
+  await login(cashier, cashierPassword);
+  await expect(
+    main.getByRole("heading", { name: "Resumen", exact: true }),
+  ).toBeVisible();
+  if (await menu.isVisible()) await menu.click();
+  const navigation = page.getByRole("navigation", {
+    name: "Navegación principal",
+  });
+  await expect(
+    navigation.getByRole("link", { name: "Importación" }),
+  ).toHaveCount(0);
+  await page.goto("/admin/importacion");
+  await expect(main.getByRole("alert")).toHaveText("Se requiere rol ADMIN.");
+  expect((await page.request.get("/api/imports/jobs")).status()).toBe(403);
+  const merchantEdit = await page.request.post("/api/merchant/profile", {
+    headers: { origin: "http://localhost:15173", "x-arveluna-csrf": "1" },
+    data: { name: "Cambio restringido" },
+  });
+  expect(merchantEdit.status()).toBe(403);
+});
+
+test("portada pública y rutas privadas de administración", async ({
+  page,
+}, info) => {
+  const apiRequests: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/")) apiRequests.push(path);
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Gestiona tu comercio con claridad." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Universidad del Norte", { exact: false }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Alberto Russell" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Yalal Ajram Elneser" }),
+  ).toBeVisible();
+  expect(apiRequests).toEqual([]);
+  await capture(page, info, "portada");
+  await page
+    .getByRole("banner")
+    .getByRole("link", { name: "Entrar al panel" })
+    .click();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(
+    page.getByRole("heading", { name: "Iniciar sesión" }),
+  ).toBeVisible();
+  await capture(page, info, "login");
+  const protectedRoutes = [
+    "/admin",
+    "/admin/dashboard",
+    "/admin/inventario",
+    "/admin/inventario/productos",
+    "/admin/ventas",
+    "/admin/caja",
+    "/admin/pagos",
+    "/admin/importacion",
+    "/admin/analisis",
+    "/admin/analisis/simulaciones",
+    "/admin/analisis/recomendaciones",
+    "/admin/configuracion",
+  ];
+  for (const route of protectedRoutes) {
+    await page.goto(route);
+    await expect(page, route).toHaveURL(/\/admin\/login$/);
+    await expect(
+      page.getByRole("heading", { name: "Iniciar sesión" }),
+    ).toBeVisible();
+  }
+  expect((await page.request.get("/api/identity/session")).status()).toBe(401);
+  expect((await page.request.get("/api/imports/jobs")).status()).toBe(401);
+  await page.goto("/app.html#payments");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+
+  const admin = await merchantFixture();
+  await page.goto("/admin/caja");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await page.getByLabel("Correo", { exact: true }).fill(admin.email);
+  await page.getByLabel("Contraseña", { exact: true }).fill(admin.password);
+  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/caja$/);
+  await expect(
+    page.getByRole("heading", { name: "Caja", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL(/\/admin\/caja$/);
+  await expect(
+    page.getByRole("heading", { name: "Caja", exact: true }),
+  ).toBeVisible();
+  const menu = page.getByRole("button", { name: "Menú", exact: true });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("button", { name: "Salir", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  expect((await page.request.get("/api/identity/session")).status()).toBe(401);
+  await page.goto("/admin/caja");
+  await expect(page).toHaveURL(/\/admin\/login$/);
 });

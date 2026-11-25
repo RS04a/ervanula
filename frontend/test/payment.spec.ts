@@ -3,7 +3,7 @@ test("creación, confirmación, auditoría, duplicado y recuperación desde el n
   page,
 }, info) => {
   page.on("pageerror", (error) => console.error("PAGE ERROR", error.message));
-  await page.goto("/");
+  await page.goto("/legacy.html");
   await page.getByRole("button", { name: "Crear orden" }).click();
   await expect(page.locator("#order")).toContainText("PENDING");
   await page.locator("#hash").fill(`demo:valid:browser-${Date.now()}`);

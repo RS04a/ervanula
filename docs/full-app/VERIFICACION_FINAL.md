@@ -24,3 +24,9 @@ TronGrid se comprobó mediante fixtures en las suites históricas. Shasta y ARVE
 ## Prueba en Shasta · 24 de noviembre de 2026
 
 Una transferencia manual de 10 ARVE de prueba se verificó por TronGrid en la aplicación completa. Se comprobaron la confirmación de la orden, la venta completada, el consumo de una unidad, el único cobro digital, la caja COP sin cambios, la auditoría y la mensajería. Se repitió la verificación con el mismo hash y se cotejaron los registros antes y después. [Evidencia de Shasta](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).
+
+## Frontend React · 25 de noviembre de 2026
+
+El build sirvió la portada pública, el panel en React Router y la interfaz histórica. En Chrome de escritorio y móvil emulado pasaron seis casos Playwright y los recorridos de caja, ventas, pagos simulados, importación y análisis. Se comprobó que la portada presenta al equipo y los módulos sin consultar la API del comercio. Sin sesión, las rutas del panel envían al login. Con sesión, un acceso directo y una recarga conservan el destino. Tras cerrar sesión, el Gateway devuelve 401. El backend devolvió 403 ante consultas de importación y cambios de perfil con rol CAJERO.
+
+También pasaron lint, typecheck, build, 57 unitarias y 9 subcasos HTTP/SQL/RabbitMQ bajo un caso agrupador, incluidos aislamiento y recuperación del broker. La suite histórica aprobó 3 pruebas HTTP y 3 de navegador. Se utilizó el perfil aislado simulado. El [recibo público de Shasta](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026) sigue siendo la evidencia de la transferencia manual del 24 de noviembre.

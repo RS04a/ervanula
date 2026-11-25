@@ -2,7 +2,7 @@
 
 **Universidad del Norte · Diseño de Software 2**  
 **Alberto Russell y Yalal Ajram Elneser**  
-**Cierre documental · 24 de noviembre de 2026**
+**Versión React · 25 de noviembre de 2026**
 
 ARVELUNA reúne identidad, catálogo, existencias, ventas, caja, pagos, importación y análisis operativo para pequeños comercios. Ejecuta HTTP para consultas y comandos interservicio que necesitan respuesta. Usa RabbitMQ para propagar hechos confirmados. Payments verifica transferencias públicas y conserva evidencia.
 
@@ -21,7 +21,7 @@ ARVELUNA reúne identidad, catálogo, existencias, ventas, caja, pagos, importac
 
 Cada usuario SQL `arv_<propietario>` tiene DML y DDL de migración para su propio esquema. Las referencias a otro servicio son campos de datos. Las FK se mantienen dentro del esquema propietario. El Gateway es un proceso HTTP sin base. La latencia de cada salto y la operación de varios procesos son costes aceptados para demostrar aislamiento.
 
-Los diagramas de arquitectura describen ejecución y comunicaciones. [Contexto](C4-contexto.md) · [Contenedores](C4-contenedores.md) · [Componentes de Sales](C4-componentes.md) · [Componentes de Payments](C4-payments.md) · [Propiedad de datos](C4-datos.md) · [Secuencia](secuencia.md).
+Los diagramas de arquitectura describen ejecución y comunicaciones. [Contexto](C4-contexto.md) · [Contenedores](C4-contenedores.md) · [Componentes de Sales](C4-componentes.md) · [Componentes de Payments](C4-payments.md) · [Componentes del frontend](C4-frontend.md) · [Propiedad de datos](C4-datos.md) · [Secuencia](secuencia.md).
 
 ## Dependencias de código y mapa de defensa
 
@@ -40,6 +40,12 @@ Los diagramas de arquitectura describen ejecución y comunicaciones. [Contexto](
 | Inbox / Outbox | `backend/libs/full-app/broker.ts`, repositorios Payments/Sales/Inventory/Analytics | Mantiene hechos y publicaciones pendientes en SQL y asienta consumo una vez por evento en cada dueño. B detiene RabbitMQ y vuelve a entregarlo. |
 
 La estrategia se puede sustituir en pruebas y el Proxy limita reintentos. La saga y la mensajería agregan estados persistidos y consistencia eventual. Los adaptadores de proyección limitan las lecturas por API y pueden reconstruir cuando se restaura un servicio.
+
+## Portada y panel React
+
+React y React Router separan la portada pública `/` del panel con sesión. Vite sirve las rutas directas y compila JavaScript y JSX con Tailwind. El panel inicia en `/admin/login` y abre `/admin/dashboard`. Los módulos usan rutas bajo `/admin`, con enlaces directos a ventas, órdenes de pago e importaciones. Tras iniciar sesión, volver al enlace solicitado permite continuar la operación. `/app.html` conserva la compatibilidad y `/legacy.html` aloja la demo histórica.
+
+La portada presenta al equipo y los módulos existentes y no lee datos del comercio. El panel oculta acciones restringidas según el rol. El Gateway valida sesión y CSRF. Los servicios aplican el rol y el alcance del comercio aunque se consulte la API directamente. [Componentes del frontend](C4-frontend.md).
 
 ## Identidad y autorización
 
@@ -81,7 +87,7 @@ Las simulaciones usan supuestos explícitos en puntos base. Por ejemplo, dos uni
 
 RabbitMQ usa mensajes persistentes, confirmaciones de publicación, colas durables, leases de Outbox y ACK después del commit. El Inbox deduplica por identificador y valida las transiciones ante eventos fuera de orden. Los reintentos de consumo tienen espera y límite, con DLQ para revisión. La reconexión reanuda entregas. El transporte permite duplicados.
 
-Alcance académico local con catálogo discreto, una caja por comercio y análisis acotado a 5.000 registros por origen. Un origen de 5.001 filas produce `PROJECTION_LIMIT` (409) en la reconciliación, sin persistir resultados parciales. Se conserva el último corte completo como desactualizado. Si aún no existía un corte, la consulta puede indicar `PROJECTION_PENDING` durante el periodo de reintento. Los cortes por API pueden mezclar instantes cercanos de distintos servicios. El periodo de una proyección puede quedar temporalmente desfasado. La verificación de hash es manual y las recomendaciones son reglas deterministas. Payments consulta evidencia pública de TRON. La verificación manual del hash y la revisión de excepciones siguen a cargo de una persona. El sistema carece de certificación fiscal, despliegue de producción, conversión de activos y devolución de fondos.
+El alcance es académico local, con catálogo discreto y una caja por comercio. Analytics limita cada origen a 5.000 registros. Si excede el límite, devuelve `PROJECTION_LIMIT` (409) y conserva el último corte completo como desactualizado. Sin corte previo puede indicar `PROJECTION_PENDING`. Los cortes pueden reunir lecturas de instantes cercanos. La verificación del hash y la revisión de excepciones son manuales. Las recomendaciones son reglas deterministas. El sistema carece de certificación fiscal, despliegue de producción, conversión de activos y devolución de fondos.
 
 ## Verificación de ArveCoins en Shasta
 
@@ -89,6 +95,4 @@ El 24 de noviembre de 2026, el integrante transfirió 10 ARVE (10 000 000 unidad
 
 La orden quedó `CONFIRMED` y Sales completó la venta. Se consumió una reserva, se registró una sola salida de una unidad y se asentó un único cobro digital de 10 ARVE. La caja física conservó 0 COP. La auditoría registró creación, detección y verificación sin fallo. Los hechos `payment.confirmed.v1` y `sale.completed.v1` se publicaron y procesaron en los consumidores previstos. La segunda solicitud con el mismo hash dejó los registros intactos. [Identificadores, resultados y enlace al explorador](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).
 
-## Evidencia de entrega
-
-El entorno aislado usa el prefijo `arveluna_full_test`, puertos distintos y volúmenes independientes. La primera verificación consta en [PROGRESO](PROGRESO.md). Los resultados de estrés, seguridad y procedencia constan en [CIERRE_AUDITADO](CIERRE_AUDITADO.md). La [demo](DEMO.md) recorre los cuatro flujos y la [guía ARVE](ARVECOINS.md) reúne el procedimiento y la evidencia de Shasta.
+El perfil `arveluna_full_test` usa puertos y volúmenes aislados. [Checklist](PROGRESO.md) · [Cierre auditado](CIERRE_AUDITADO.md) · [Guion de defensa](DEMO.md).

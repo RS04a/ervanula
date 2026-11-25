@@ -14,7 +14,7 @@ test("modo TronGrid muestra lectura real y desactiva hashes sintéticos sin cons
       }),
     }),
   );
-  await page.goto("/");
+  await page.goto("/legacy.html");
   await expect(page.locator("#provider")).toContainText(
     "TRONGRID · SHASTA · SOLO LECTURA",
   );

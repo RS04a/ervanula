@@ -1,21 +1,37 @@
+import { createElement, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { icon } from "./icons.js";
+
+const reactAttributes = {
+  class: "className",
+  tabindex: "tabIndex",
+  onclick: "onClick",
+};
+// These factories let the existing view modules build React elements from their API results.
 export function el(tag, attrs = {}, ...children) {
-  const item = document.createElement(tag);
-  for (const [name, value] of Object.entries(attrs)) {
-    if (name.startsWith("on")) item.addEventListener(name.slice(2), value);
-    else if (value === true) item.setAttribute(name, "");
-    else if (value !== false && value !== null && value !== undefined)
-      item.setAttribute(name, String(value));
+  const props = Object.fromEntries(
+    Object.entries(attrs).map(([name, value]) => [
+      reactAttributes[name] ?? name,
+      value,
+    ]),
+  );
+  if (tag === "a" && props.href?.startsWith("/admin/")) {
+    const { href, ...linkProps } = props;
+    return createElement(
+      Link,
+      { ...linkProps, to: href },
+      ...children.flat(Infinity),
+    );
   }
-  for (const child of children.flat())
-    if (child !== null && child !== undefined) item.append(child);
-  return item;
+  return createElement(tag, props, ...children.flat(Infinity));
 }
-export const heading = (title, eyebrow) =>
+export const heading = (title, eyebrow, description) =>
   el(
     "header",
     { class: "page-header" },
     eyebrow ? el("span", { class: "eyebrow" }, eyebrow) : null,
     el("h1", {}, title),
+    description ? el("p", { class: "page-subtitle" }, description) : null,
   );
 export const panel = (title, ...children) =>
   el("section", { class: "panel" }, el("h2", {}, title), children.flat());
@@ -26,7 +42,7 @@ export const button = (label, action, primary = false) =>
     label,
   );
 export const empty = (text = "Sin registros para mostrar.") =>
-  el("p", { class: "empty" }, text);
+  el("p", { class: "empty" }, icon("empty"), text);
 export const pageSize = 25;
 export function pager(offset, rows, go) {
   return el(
@@ -46,7 +62,8 @@ export function table(columns, rows) {
     {
       class: "table-scroll",
       tabindex: "0",
-      "aria-label": "Tabla de registros",
+      role: "region",
+      "aria-label": `Tabla de registros: ${columns.slice(0, 3).join(", ")}`,
     },
     el(
       "table",
@@ -93,59 +110,129 @@ export const short = (value) =>
   String(value ?? "—")
     .split("-")
     .at(-1);
-export const pill = (status) => el("span", { class: "pill" }, status);
-export function form(label, inputs, action) {
-  const submit = el("button", { type: "submit", class: "primary" }, label);
-  const feedback = el("p", { role: "status", class: "feedback" });
-  const control = el(
+const statusTones = {
+  success: ["COMPLETED", "CONFIRMED", "APPLIED", "DONE", "Activo"],
+  warning: [
+    "AWAITING_PAYMENT",
+    "PENDING",
+    "CONFIRMING",
+    "REVIEW",
+    "RUNNING",
+    "EXPIRED",
+  ],
+  danger: ["REJECTED", "FAILED", "INVALID", "CANCELLED", "Inactivo"],
+  blue: ["DRAFT", "PREVIEW", "DETECTED", "Simulación", "TronGrid", "ADMIN"],
+};
+export function pill(status, tone) {
+  const style =
+    tone ??
+    Object.keys(statusTones).find((key) => statusTones[key].includes(status));
+  return el("span", { class: "pill", "data-tone": style }, status);
+}
+export const callout = (text, warning = false) =>
+  el(
+    "p",
+    { class: warning ? "callout callout-warning" : "callout", role: "note" },
+    icon(warning ? "alert" : "clock"),
+    text,
+  );
+export const metricCard = (title, value, symbol, note, tone = "blue") =>
+  el(
+    "section",
+    { class: "panel metric-card" },
+    el(
+      "h2",
+      { class: "metric-heading" },
+      title,
+      el("span", { class: "metric-icon", "data-tone": tone }, icon(symbol)),
+    ),
+    el("p", { class: "metric" }, value),
+    note ? el("p", { class: "note" }, note) : null,
+  );
+export const split = (...panels) =>
+  el("div", { class: "split" }, panels.filter(Boolean));
+export const detailList = (items) =>
+  el(
+    "dl",
+    { class: "detail-list" },
+    items.map(([label, value]) =>
+      el("div", {}, el("dt", {}, label), el("dd", {}, value)),
+    ),
+  );
+export function feedbackMessage(error) {
+  if (error instanceof TypeError || error instanceof SyntaxError)
+    return "No se pudo obtener una respuesta de ARVELUNA. Intenta de nuevo.";
+  return `${error.message}${error.retryable ? " · Puedes reintentar." : ""}`;
+}
+function Form({ label, inputs, action }) {
+  const pending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  async function submit(event) {
+    event.preventDefault();
+    if (pending.current) return;
+    const data = Object.fromEntries(new FormData(event.currentTarget));
+    pending.current = true;
+    setBusy(true);
+    setFeedback({ text: "Procesando…" });
+    try {
+      await action(data);
+      setFeedback({ text: "Operación registrada." });
+    } catch (error) {
+      setFeedback({ text: feedbackMessage(error), error: true });
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
+  return el(
     "form",
-    {
-      class: "form-grid",
-      onsubmit: async (event) => {
-        event.preventDefault();
-        if (submit.disabled) return;
-        const data = Object.fromEntries(new FormData(control));
-        submit.disabled = true;
-        feedback.textContent = "Procesando…";
-        feedback.className = "feedback";
-        try {
-          await action(data);
-          feedback.textContent = "Operación registrada.";
-        } catch (error) {
-          feedback.className = "feedback error";
-          feedback.textContent = `${error.message}${error.retryable ? " · Puedes reintentar." : ""}`;
-        } finally {
-          submit.disabled = false;
-        }
-      },
-    },
+    { class: "form-grid", onSubmit: submit },
     inputs.map(([name, title, params = {}]) => {
-      const { choices, ...attrs } = params;
+      const { choices, value, maxlength, autocomplete, inputmode, ...attrs } =
+        params;
+      const props = {
+        name,
+        required: true,
+        ...attrs,
+        defaultValue: value,
+        maxLength: maxlength,
+        autoComplete: autocomplete,
+        inputMode: inputmode,
+      };
       const input = choices
         ? el(
             "select",
-            { name, required: true, ...attrs },
+            props,
             choices.map((choice) => {
-              const [value, text] = Array.isArray(choice)
+              const [key, text] = Array.isArray(choice)
                 ? choice
                 : [choice, choice];
-              return el(
-                "option",
-                { value, selected: value === attrs.value },
-                text,
-              );
+              return el("option", { key, value: key }, text);
             }),
           )
-        : el("input", { name, required: true, ...attrs });
-      return el("label", {}, title, input);
+        : el("input", props);
+      return el("label", { key: name }, title, input);
     }),
-    el("div", { class: "submit" }, submit, feedback),
+    el(
+      "div",
+      { class: "submit" },
+      el("button", { type: "submit", class: "primary", disabled: busy }, label),
+      el(
+        "p",
+        {
+          role: "status",
+          class: feedback?.error ? "feedback error" : "feedback",
+        },
+        feedback?.text,
+      ),
+    ),
   );
-  return control;
 }
-export const confirmAction = (message, fn) => {
-  if (window.confirm(message)) return fn();
-};
+
+export function form(label, inputs, action) {
+  return createElement(Form, { key: label, label, inputs, action });
+}
 export const assets = ["COP", "USDT", "ARVE"];
 
 export function listFilter(title, key, label, values, current, change) {
@@ -163,5 +250,21 @@ export function listFilter(title, key, label, values, current, change) {
       ],
     ],
     (data) => change(data[key]),
+  );
+}
+
+export function networkName(network) {
+  if (network === "shasta") return "Shasta TESTNET";
+  if (network === "nile") return "Nile TESTNET";
+  return network === "mainnet" ? "Mainnet" : network;
+}
+export function paymentProfiles(settings) {
+  const profiles = [["USDT", settings]];
+  if (settings.arve) profiles.push(["ARVE", settings.arve]);
+  return profiles.map(([asset, profile]) =>
+    pill(
+      `${asset} · ${networkName(profile.network)} · ${profile.provider === "simulated" ? "Simulación" : "TronGrid"}`,
+      profile.network === "mainnet" ? "blue" : "warning",
+    ),
   );
 }

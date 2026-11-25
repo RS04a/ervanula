@@ -30,6 +30,7 @@ const svgNames = [
   "C4-datos.md",
   "C4-payments.md",
   "Clean-Architecture.md",
+  "C4-frontend.md",
 ];
 const asData = (buffer) => `data:image/png;base64,${buffer.toString("base64")}`;
 const captureData = (path) => asData(readFileSync(path));
@@ -59,7 +60,7 @@ const slides = [
     body: [
       "Aplicación universitaria para pequeños comercios",
       "Alberto Russell y Yalal Ajram Elneser",
-      "Cierre verificado en Shasta · 24 de noviembre de 2026",
+      "Versión React · 25 de noviembre de 2026",
     ],
   },
   {
@@ -67,6 +68,18 @@ const slides = [
     title: "Operar y conciliar en un comercio",
     diagram: 0,
     note: "El cliente realiza cualquier transferencia con su medio externo y entrega la referencia al cajero.",
+  },
+  {
+    label: "PORTADA PÚBLICA",
+    title: "Conocer ARVELUNA y entrar al panel",
+    photo: "react/portada",
+    note: "La portada / presenta al equipo y sus módulos. No solicita datos del comercio.",
+  },
+  {
+    label: "FRONTEND Y SESIÓN",
+    title: "Rutas del panel y autorización",
+    diagram: 7,
+    note: "React Router abre /admin/login y devuelve al enlace solicitado. El Gateway y los servicios validan sesión y permisos.",
   },
   {
     label: "02 · CONTENEDORES",
@@ -111,8 +124,8 @@ const slides = [
   {
     label: "06 · EVIDENCIA",
     title: "Del hash a la auditoría",
-    photo: "escritorio-pago",
-    note: "Captura histórica de la demo simulada. La venta espera el evento validado contra la orden, el activo, el monto, la red y el contrato.",
+    photo: "react/pagos",
+    note: "Captura React del entorno simulado. La orden y su auditoría se consultan en /admin/pagos.",
   },
   {
     label: "SHASTA · TESTNET",
@@ -127,13 +140,13 @@ const slides = [
   {
     label: "07 · FLUJO C",
     title: "Importación CSV comprobable",
-    photo: "escritorio-importacion",
+    photo: "react/importacion",
     note: "Vista previa, validación por fila, aplicación idempotente y entrada de inventario.",
   },
   {
     label: "08 · FLUJO D",
     title: "Cortes y escenarios explicables",
-    photo: "escritorio-dashboard",
+    photo: "react/resumen",
     note: "Totales separados por activo. Simulaciones con supuestos explícitos y recomendaciones por umbral.",
   },
   {
@@ -172,16 +185,9 @@ const deckCss = `
   .cover{background:#173b2d;color:white;padding-top:1.35in}.cover .label{color:#c5e3bb}.cover h1{font-size:70px}
 `;
 
-for (const name of [
-  "escritorio-dashboard",
-  "escritorio-pago",
-  "escritorio-importacion",
-  "movil-dashboard",
-]) {
-  if (!existsSync(capture(name)))
-    throw new Error(
-      "Ejecuta primero los recorridos de navegador y guarda las capturas",
-    );
+for (const { photo } of slides) {
+  if (photo && !existsSync(capture(photo)))
+    throw new Error(`Falta la captura de defensa: ${photo}`);
 }
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({

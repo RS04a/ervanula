@@ -1,3 +1,4 @@
+import { adminUrl } from "./routes.js";
 import {
   assets,
   button,
@@ -14,6 +15,11 @@ import {
   pill,
   short,
   table,
+  split,
+  paymentProfiles,
+  networkName,
+  detailList,
+  callout,
 } from "./ui.js";
 
 const count = (value = 0) => ({
@@ -65,7 +71,11 @@ export async function products(ctx) {
     ? rows.find((p) => p.id === state.selected)
     : null;
   return [
-    heading("Productos", "Catálogo"),
+    heading(
+      "Productos",
+      "Inventario",
+      "Administra el catálogo y revisa el stock por producto.",
+    ),
     admin
       ? panel(
           edit ? `Editar ${edit.sku}` : "Nuevo producto",
@@ -148,67 +158,73 @@ export async function inventory(ctx) {
     ),
   ]);
   return [
-    heading("Inventario", "Existencias y movimientos"),
-    panel(
-      "Saldos",
-      form(
-        "Buscar saldo",
-        [
-          [
-            "stockSearch",
-            "SKU o descripción",
-            { value: state.stockSearch, required: false },
-          ],
-        ],
-        ({ stockSearch }) => go({ stockSearch, stockPage: 0 }),
-      ),
-      table(
-        ["SKU", "Disponible", "Reservado", "Historial"],
-        products.map((p) => [
-          p.sku,
-          p.balance?.available ?? 0,
-          p.balance?.reserved ?? 0,
-          button("Filtrar", () => go({ filter: p.id, page: 0 })),
-        ]),
-      ),
-      pager(state.stockPage ?? 0, products, (stockPage) => go({ stockPage })),
+    heading(
+      "Inventario",
+      "Operaciones",
+      "Consulta existencias, reservas y movimientos.",
     ),
-    admin && products.some((p) => p.active)
-      ? panel(
-          "Registrar movimiento",
-          form(
-            "Registrar",
+    split(
+      panel(
+        "Saldos",
+        form(
+          "Buscar saldo",
+          [
             [
-              [
-                "productId",
-                "Producto",
-                productChoice(products.filter((p) => p.active)),
-              ],
-              [
-                "kind",
-                "Tipo",
-                {
-                  choices: [
-                    ["IN", "Entrada"],
-                    ["OUT", "Salida"],
-                    ["ADJUST", "Ajuste por diferencia"],
-                  ],
-                },
-              ],
-              [
-                "quantity",
-                "Unidades (con signo para ajuste)",
-                { ...count(), min: -1000000 },
-              ],
-              ["reason", "Motivo", text()],
+              "stockSearch",
+              "SKU o descripción",
+              { value: state.stockSearch, required: false },
             ],
-            ctx.referenced("inventory/movements", (data) => ({
-              ...data,
-              quantity: Number(data.quantity),
-            })),
-          ),
-        )
-      : null,
+          ],
+          ({ stockSearch }) => go({ stockSearch, stockPage: 0 }),
+        ),
+        table(
+          ["SKU", "Disponible", "Reservado", "Historial"],
+          products.map((p) => [
+            p.sku,
+            p.balance?.available ?? 0,
+            p.balance?.reserved ?? 0,
+            button("Filtrar", () => go({ filter: p.id, page: 0 })),
+          ]),
+        ),
+        pager(state.stockPage ?? 0, products, (stockPage) => go({ stockPage })),
+      ),
+      admin && products.some((p) => p.active)
+        ? panel(
+            "Registrar movimiento",
+            form(
+              "Registrar",
+              [
+                [
+                  "productId",
+                  "Producto",
+                  productChoice(products.filter((p) => p.active)),
+                ],
+                [
+                  "kind",
+                  "Tipo",
+                  {
+                    choices: [
+                      ["IN", "Entrada"],
+                      ["OUT", "Salida"],
+                      ["ADJUST", "Ajuste por diferencia"],
+                    ],
+                  },
+                ],
+                [
+                  "quantity",
+                  "Unidades (con signo para ajuste)",
+                  { ...count(), min: -1000000 },
+                ],
+                ["reason", "Motivo", text()],
+              ],
+              ctx.referenced("inventory/movements", (data) => ({
+                ...data,
+                quantity: Number(data.quantity),
+              })),
+            ),
+          )
+        : null,
+    ),
     panel(
       "Movimientos",
       state.filter
@@ -261,7 +277,7 @@ export async function sales(ctx) {
         sale.paymentId
           ? el(
               "a",
-              { href: `#payments/${sale.paymentId}` },
+              { href: adminUrl("payments", sale.paymentId) },
               "Ver orden de pago",
             )
           : null,
@@ -355,22 +371,28 @@ export async function sales(ctx) {
   };
   const draftId = id();
   return [
-    heading("Ventas", "Operaciones"),
-    panel(
-      "Nueva venta",
-      form(
-        "Crear borrador",
-        [["asset", "Activo de la venta", { choices: assets }]],
-        async (data) => {
-          const sale = await ctx.post("sales/sales", {
-            asset: data.asset,
-            id: draftId,
-          });
-          window.location.hash = `sales/${sale.id}`;
-        },
-      ),
+    heading(
+      "Ventas",
+      "Operaciones",
+      "Crea una venta en COP, USDT o ARVE y consulta su estado.",
     ),
-    await renderDetail(selected),
+    split(
+      panel(
+        "Nueva venta",
+        form(
+          "Crear borrador",
+          [["asset", "Activo de la venta", { choices: assets }]],
+          async (data) => {
+            const sale = await ctx.post("sales/sales", {
+              asset: data.asset,
+              id: draftId,
+            });
+            ctx.navigate(adminUrl("sales", sale.id));
+          },
+        ),
+      ),
+      await renderDetail(selected),
+    ),
     panel(
       "Historial",
       listFilter(
@@ -388,7 +410,7 @@ export async function sales(ctx) {
           money(sale.totalBase, sale.asset, sale.scale),
           pill(sale.status),
           date(sale.createdAt),
-          el("a", { href: `#sales/${sale.id}` }, "Abrir venta"),
+          el("a", { href: adminUrl("sales", sale.id) }, "Abrir venta"),
         ]),
       ),
       pager(state.page, rows, (page) => go({ page })),
@@ -409,60 +431,69 @@ export async function cash(ctx) {
   ]);
   const current = register.session;
   return [
-    heading("Caja", register.name),
-    current
-      ? panel(
-          "Caja abierta",
-          el("p", { class: "metric" }, money(current.expectedBase, "COP")),
-          el(
-            "p",
-            { class: "note" },
-            `Efectivo esperado · apertura ${date(current.openedAt)}`,
-          ),
-          form(
-            "Cerrar caja",
-            [["amount", "Efectivo contado (COP)", amount()]],
-            ctx.referenced(
-              "cash/close",
-              (data) => ({ ...data, sessionId: current.id }),
-              "¿Cerrar la sesión de caja?",
+    heading(
+      "Caja",
+      register.name,
+      "Controla la sesión física y consulta los movimientos por activo.",
+    ),
+    callout(
+      "Los cobros digitales en USDT o ARVE no cambian el efectivo físico en COP.",
+    ),
+    split(
+      current
+        ? panel(
+            "Caja abierta",
+            el("p", { class: "metric" }, money(current.expectedBase, "COP")),
+            el(
+              "p",
+              { class: "note" },
+              `Efectivo esperado · apertura ${date(current.openedAt)}`,
+            ),
+            form(
+              "Cerrar caja",
+              [["amount", "Efectivo contado (COP)", amount()]],
+              ctx.referenced(
+                "cash/close",
+                (data) => ({ ...data, sessionId: current.id }),
+                "¿Cerrar la sesión de caja?",
+              ),
+            ),
+          )
+        : panel(
+            "Caja cerrada",
+            form(
+              "Abrir caja",
+              [["amount", "Saldo inicial (COP)", amount("0")]],
+              ctx.referenced("cash/open"),
             ),
           ),
-        )
-      : panel(
-          "Caja cerrada",
-          form(
-            "Abrir caja",
-            [["amount", "Saldo inicial (COP)", amount("0")]],
-            ctx.referenced("cash/open"),
-          ),
-        ),
-    current && admin
-      ? panel(
-          "Movimiento manual",
-          form(
-            "Registrar movimiento",
-            [
+      current && admin
+        ? panel(
+            "Movimiento manual",
+            form(
+              "Registrar movimiento",
               [
-                "kind",
-                "Tipo",
-                {
-                  choices: [
-                    ["IN", "Ingreso"],
-                    ["OUT", "Egreso"],
-                  ],
-                },
+                [
+                  "kind",
+                  "Tipo",
+                  {
+                    choices: [
+                      ["IN", "Ingreso"],
+                      ["OUT", "Egreso"],
+                    ],
+                  },
+                ],
+                ["amount", "Monto (COP)", amount()],
+                ["reason", "Motivo", text()],
               ],
-              ["amount", "Monto (COP)", amount()],
-              ["reason", "Motivo", text()],
-            ],
-            ctx.referenced("cash/movements", (data) => ({
-              ...data,
-              sessionId: current.id,
-            })),
-          ),
-        )
-      : null,
+              ctx.referenced("cash/movements", (data) => ({
+                ...data,
+                sessionId: current.id,
+              })),
+            ),
+          )
+        : null,
+    ),
     panel(
       "Sesiones",
       table(
@@ -491,10 +522,14 @@ export async function cash(ctx) {
         (asset) => go({ asset, secondPage: 0 }),
       ),
       table(
-        ["Fecha", "Tipo", "Monto", "Venta", "Sesión", "Motivo"],
+        ["Fecha", "Tipo", "Ámbito", "Monto", "Venta", "Sesión", "Motivo"],
         movements.map((m) => [
           date(m.createdAt),
           m.kind,
+          pill(
+            m.asset === "COP" ? "Efectivo" : "Digital",
+            m.asset === "COP" ? "success" : "blue",
+          ),
           money(m.amountBase, m.asset),
           short(m.saleId),
           short(m.sessionId),
@@ -523,8 +558,17 @@ export async function payments(ctx) {
   return [
     heading(
       "Pagos",
-      `USDT · ${settings.provider === "simulated" ? "Simulación" : "TronGrid"} · ${settings.network}${settings.arve ? ` / ARVE · ${settings.arve.network} · ${settings.arve.provider === "simulated" ? "Simulación" : "TronGrid"}` : ""}`,
+      "Operaciones",
+      "Consulta y verifica las órdenes TRC-20 de cada venta.",
     ),
+    el("div", { class: "status-strip" }, ...paymentProfiles(settings)),
+    settings.network !== "mainnet" ||
+    (settings.arve && settings.arve.network !== "mainnet")
+      ? callout(
+          "Las órdenes marcadas TESTNET corresponden a redes de prueba.",
+          true,
+        )
+      : null,
     order
       ? panel(
           "Orden de pago",
@@ -543,24 +587,20 @@ export async function payments(ctx) {
             ),
             button("Actualizar orden", () => go({})),
           ),
-          el(
-            "p",
-            { class: "note" },
-            `Vence ${date(order.expiresAt)} · contrato ${order.tokenContract}`,
-          ),
-          el(
-            "div",
-            { class: "actions wrap" },
-            order.recipientAddress,
-            button("Copiar dirección", () =>
-              ctx.task(() =>
-                navigator.clipboard.writeText(order.recipientAddress),
-              ),
+          detailList([
+            ["Red", networkName(order.network)],
+            ["Vencimiento", date(order.expiresAt)],
+            ["Contrato", order.tokenContract],
+            ["Dirección receptora", order.recipientAddress],
+            ...(order.transactionHash
+              ? [["Hash registrado", order.transactionHash]]
+              : []),
+          ]),
+          button("Copiar dirección", () =>
+            ctx.task(() =>
+              navigator.clipboard.writeText(order.recipientAddress),
             ),
           ),
-          order.transactionHash
-            ? el("p", { class: "wrap" }, `Transacción ${order.transactionHash}`)
-            : null,
           order.confirmedAt && order.status !== "CONFIRMED"
             ? el(
                 "p",
@@ -593,6 +633,7 @@ export async function payments(ctx) {
                 },
               )
             : null,
+          el("h3", { class: "audit-heading" }, "Auditoría"),
           table(
             ["Fecha", "Evento", "Estado", "Código"],
             audit.map((a) => [
@@ -621,7 +662,7 @@ export async function payments(ctx) {
           short(o.saleId),
           money(o.amountBaseUnits, o.tokenSymbol, o.tokenDecimals),
           pill(o.status),
-          el("a", { href: `#payments/${o.id}` }, "Abrir orden"),
+          el("a", { href: adminUrl("payments", o.id) }, "Abrir orden"),
         ]),
       ),
       pager(state.page, orders, (page) => go({ page })),

@@ -1,5 +1,7 @@
 import js from "@eslint/js";
 import ts from "typescript-eslint";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
 export default ts.config(
   {
     files: ["scripts/*.mjs"],
@@ -9,9 +11,11 @@ export default ts.config(
   js.configs.recommended,
   ...ts.configs.recommended,
   {
-    files: ["frontend/src/**/*.js"],
+    files: ["frontend/src/**/*.{js,jsx}"],
     languageOptions: {
+      parserOptions: { ecmaFeatures: { jsx: true } },
       globals: {
+        AbortController: "readonly",
         FormData: "readonly",
         document: "readonly",
         window: "readonly",
@@ -24,6 +28,15 @@ export default ts.config(
         btoa: "readonly",
         URLSearchParams: "readonly",
       },
+    },
+  },
+  {
+    files: ["frontend/src/**/*.jsx"],
+    plugins: { react, "react-hooks": reactHooks },
+    rules: {
+      "react/jsx-uses-vars": "error",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
     },
   },
 );

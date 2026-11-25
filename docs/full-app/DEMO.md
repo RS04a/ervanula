@@ -1,10 +1,10 @@
 # Demo para defensa · 10–12 minutos
 
-Usar el perfil local y un comercio de demostración. Entrar por `http://localhost:5173/app.html`. Mostrar el [diagrama de contexto](C4-contexto.md), los [contenedores](C4-contenedores.md) y la salud del Gateway durante el primer minuto.
+Usar el perfil local y un comercio de demostración. Abrir la portada en `http://localhost:5173/`, entrar por `/admin/login` y mostrar el resumen en `/admin/dashboard`. Mostrar el [diagrama de contexto](C4-contexto.md), los [contenedores](C4-contenedores.md) y la salud del Gateway durante el primer minuto.
 
 | Tiempo | Qué mostrar | Qué observar |
 | --- | --- | --- |
-| 0:00–1:30 | Abrir Swagger y el dashboard. Entrar como ADMIN y mostrar Configuración. | Rol, comercio, perfil simulado por defecto y propiedad de datos. |
+| 0:00–1:30 | Mostrar la portada y abrir `/admin/ventas` sin sesión. Entrar como ADMIN y recargar el enlace. | La portada queda pública. El panel envía al login y vuelve a Ventas con la sesión. |
 | 1:30–4:00 | A. Abrir caja con 100 COP. Crear CAFE a 30 COP con mínimo 5. Entrar 4 unidades y vender 2. Cerrar con 155 COP. | Venta completada, stock 2, esperado 160 COP, diferencia −5 COP. |
 | 4:00–6:45 | B. Guardar receptor USDT mainnet `TJRabPrwbZy45sbavfcjinPJC18kjpRTv8`. Crear DIGITAL a 10 USDT, entrar 2, vender 1 y verificar `demo:multi:defensa-001`. | Orden confirmada y auditada, venta completada, un movimiento digital sin sesión física. |
 | 6:45–7:45 | Abrir otra venta digital. Probar el mismo hash y un hash `demo:unavailable:defensa-001`. | El duplicado y el fallo recuperable dejan la reserva pendiente. Cambiar sufijos al repetir la demo. |
@@ -20,7 +20,7 @@ TAZA,Taza pequeña,COP,7.50,5,2
 ERROR,Precio inválido,COP,no,0,1
 ```
 
-Las capturas provienen del perfil aislado utilizado por Playwright. Para la caída de RabbitMQ, utilizar el flujo B de `npm run full:test -- test`, que detiene y recupera exclusivamente el broker del proyecto de prueba.
+Las capturas de React provienen del perfil aislado de Playwright. Para la demo histórica, abrir `/legacy.html` con su perfil separado. Para la caída de RabbitMQ, utilizar el flujo B de `npm run full:test -- test`, que detiene y recupera exclusivamente el broker del proyecto de prueba.
 
 ## Repetir la verificación
 
@@ -34,6 +34,7 @@ Abrir el [recibo público de la transferencia](https://shasta.tronscan.org/#/tra
 
 | Tema | Archivo que se abre y qué señalar |
 | --- | --- |
+| Portada, rutas y sesión | [main.jsx](../../frontend/src/site/main.jsx), [routes.js](../../frontend/src/full/routes.js) y [app.jsx](../../frontend/src/full/app.jsx). Mostrar la separación entre portada, login y panel, luego contrastarla con el Gateway. |
 | DTOs y validación | [payment.dto.ts](../../backend/apps/payments-service/src/presentation/validation/payment.dto.ts) define `FullVerifyDto` y `SaleCheckoutDto`. [full-app.controller.ts](../../backend/apps/payments-service/src/presentation/controllers/full-app.controller.ts) aplica `ValidationPipe` y separa la verificación pública del checkout interno. |
 | Gateway y autorización | [full-app.ts](../../backend/apps/api-gateway/src/full-app.ts) permite rutas explícitas, valida CSRF y reenvía la sesión. [service-http.ts](../../backend/libs/full-app/service-http.ts) muestra las credenciales internas y la introspección. |
 | Clean Architecture y DIP | [payments.ts](../../backend/apps/payments-service/src/application/use-cases/payments.ts) usa los puertos de [ports.ts](../../backend/apps/payments-service/src/application/ports/ports.ts). Contrastar los tipos de dominio en [models.ts](../../backend/apps/payments-service/src/domain/entities/models.ts) con el adaptador [prisma.repositories.ts](../../backend/apps/payments-service/src/infrastructure/database/prisma.repositories.ts). |
