@@ -1,6 +1,7 @@
-import { createElement, useRef, useState } from "react";
+import { createElement, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { icon } from "./icons.js";
+import { BrandImage } from "../site/brand.jsx";
 
 const reactAttributes = {
   class: "className",
@@ -45,6 +46,7 @@ export const empty = (text = "Sin registros para mostrar.") =>
   el("p", { class: "empty" }, icon("empty"), text);
 export const pageSize = 25;
 export function pager(offset, rows, go) {
+  if (!offset && !rows.length) return null;
   return el(
     "div",
     { class: "pagination" },
@@ -55,8 +57,8 @@ export function pager(offset, rows, go) {
       : null,
   );
 }
-export function table(columns, rows) {
-  if (!rows.length) return empty();
+export function table(columns, rows, emptyMessage) {
+  if (!rows.length) return empty(emptyMessage);
   return el(
     "div",
     {
@@ -166,6 +168,7 @@ export function feedbackMessage(error) {
 }
 function Form({ label, inputs, action }) {
   const pending = useRef(false);
+  const formId = useId();
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
   async function submit(event) {
@@ -176,8 +179,8 @@ function Form({ label, inputs, action }) {
     setBusy(true);
     setFeedback({ text: "Procesando…" });
     try {
-      await action(data);
-      setFeedback({ text: "Operación registrada." });
+      const completed = await action(data);
+      setFeedback(completed === false ? null : { text: "Listo." });
     } catch (error) {
       setFeedback({ text: feedbackMessage(error), error: true });
     } finally {
@@ -187,11 +190,21 @@ function Form({ label, inputs, action }) {
   }
   return el(
     "form",
-    { class: "form-grid", onSubmit: submit },
+    { class: "form-grid", onSubmit: submit, "aria-busy": busy },
     inputs.map(([name, title, params = {}]) => {
-      const { choices, value, maxlength, autocomplete, inputmode, ...attrs } =
-        params;
+      const {
+        choices,
+        value,
+        maxlength,
+        autocomplete,
+        inputmode,
+        help,
+        ...attrs
+      } = params;
+      const fieldId = `${formId}-${name}`;
+      const helpId = `${fieldId}-ayuda`;
       const props = {
+        id: fieldId,
         name,
         required: true,
         ...attrs,
@@ -199,6 +212,7 @@ function Form({ label, inputs, action }) {
         maxLength: maxlength,
         autoComplete: autocomplete,
         inputMode: inputmode,
+        "aria-describedby": help ? helpId : undefined,
       };
       const input = choices
         ? el(
@@ -212,7 +226,13 @@ function Form({ label, inputs, action }) {
             }),
           )
         : el("input", props);
-      return el("label", { key: name }, title, input);
+      return el(
+        "div",
+        { key: name, class: "form-field" },
+        el("label", { htmlFor: fieldId }, title),
+        input,
+        help ? el("p", { id: helpId, class: "field-help" }, help) : null,
+      );
     }),
     el(
       "div",
@@ -221,7 +241,7 @@ function Form({ label, inputs, action }) {
       el(
         "p",
         {
-          role: "status",
+          role: feedback?.error ? "alert" : "status",
           class: feedback?.error ? "feedback error" : "feedback",
         },
         feedback?.text,
@@ -234,6 +254,17 @@ export function form(label, inputs, action) {
   return createElement(Form, { key: label, label, inputs, action });
 }
 export const assets = ["COP", "USDT", "ARVE"];
+
+export function assetLabel(asset, label = asset) {
+  return asset === "ARVE"
+    ? el(
+        "span",
+        { class: "arve-label" },
+        createElement(BrandImage, { variant: "arve", decorative: true }),
+        label,
+      )
+    : label;
+}
 
 export function listFilter(title, key, label, values, current, change) {
   return form(
@@ -263,7 +294,10 @@ export function paymentProfiles(settings) {
   if (settings.arve) profiles.push(["ARVE", settings.arve]);
   return profiles.map(([asset, profile]) =>
     pill(
-      `${asset} · ${networkName(profile.network)} · ${profile.provider === "simulated" ? "Simulación" : "TronGrid"}`,
+      assetLabel(
+        asset,
+        `${asset} · ${networkName(profile.network)} · ${profile.provider === "simulated" ? "Simulación" : "TronGrid"}`,
+      ),
       profile.network === "mainnet" ? "blue" : "warning",
     ),
   );

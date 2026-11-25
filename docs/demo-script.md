@@ -1,6 +1,8 @@
 # Defensa técnica — 10 minutos
 
-Preparación: mantener BLOCKCHAIN_PROVIDER=simulated y PAYMENT_PROVIDER sin definir o simulated; seguir README; MySQL saludable, migraciones aplicadas, `npm run dev`. Abrir http://localhost:5173 y http://localhost:3000/docs. Usar dirección predeterminada y monto `10.00`. Los hashes son pistas y el proveedor genera datos independientes de la orden.
+Este guion corresponde a la demo histórica de Payments. Para el panel React, consultar el [guion de la aplicación completa](full-app/DEMO.md).
+
+Preparación: mantener BLOCKCHAIN_PROVIDER=simulated y PAYMENT_PROVIDER sin definir o simulated. Seguir el [inicio rápido del perfil histórico](../README.md#inicio-rápido), iniciar con `npm run dev` y abrir http://localhost:5173/legacy.html y http://localhost:3000/docs. Usar la dirección predeterminada y el monto `10.00`. Los hashes son pistas y el proveedor genera datos independientes de la orden.
 
 1. **0:00–1:00 — Contexto y contenedores.** Abrir `c4-context.md` y `c4-containers.md`. Explicar actores, procesos separados y propiedad exclusiva de Payments DB. No se mueve dinero.
 2. **1:00–2:00 — Clean Architecture.** Mostrar `backend/apps/payments-service/src`: domain, application, infrastructure y presentation. Abrir puertos y caso de uso; no importan Prisma ni Nest.

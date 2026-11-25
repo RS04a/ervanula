@@ -12,8 +12,9 @@
 | 4. Cash Register, Payments y RabbitMQ | Terminado en modo local | Efectivo y cierre, evento de pago confirmado con el broker detenido, recuperación e Inbox, un movimiento digital, hash repetido, cancelación segura, expiración y revisión tardía. |
 | 5. Import | Terminado | Carga UTF-8, vista previa, resultados por fila, fila válida, precio inválido, rechazo de SKU previo y confirmación repetida. |
 | 6. Analytics | Terminado | Reconciliación, corte, totales COP/USDT independientes, diferencias de caja, predicados explicables y simulación sin cambios en catálogo o existencias. |
-| Frontend | Terminado | Playwright completó A–D en escritorio y en emulación Pixel 7. Capturas de dashboard, pago e importación de ambos proyectos. |
-| Documentos y entrega | Terminado | C4, secuencia, guía, contratos, informe PDF, PPTX/PDF y paquete separado. |
+| Frontend React | Verificado en la rama de rediseño | React Router, Vite y Tailwind. Portada pública, rutas con sesión bajo `/admin` y recorridos verificados en escritorio y móvil emulado. |
+| Marca | Integrada provisionalmente | Tres PNG con defectos de bordes visibles al ampliar. [Capturas y revisión](capturas/marca-react/README.md). |
+| Documentos y entrega | Paquete actualizado pendiente | C4, secuencia, guías, informe y presentación de la migración React disponibles. Las capturas de marca son posteriores a los PDF/PPTX y el ZIP deberá generarse desde la versión integrada. |
 | ArveCoins en Shasta | Verificado en TESTNET el 24 de noviembre | 10 ARVE, orden confirmada, venta completada y reintento idempotente. [Evidencia](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026). |
 
 ## Evidencia histórica · perfil aislado del 21 de noviembre
@@ -48,3 +49,39 @@ Después del commit se creó el proyecto ArveCoins y se verificaron la compilaci
 ## Continuación · 24 de noviembre de 2026
 
 Se completó la prueba en vivo de ArveCoins en Shasta. Payments confirmó por TronGrid una transferencia manual de 10 ARVE. Sales completó la venta, Inventory registró una única salida y Cash registró un cobro digital sin cambiar el efectivo COP. La repetición del hash dejó los registros intactos. [Evidencia pública y resultados](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026)
+
+## Continuación · 25 de noviembre de 2026
+
+### Frontend vigente
+
+La migración a **React, React Router, Vite y Tailwind** está guardada en `f4a92d9` de `feat/frontend-redesign`. `/` es la portada pública y presenta el proyecto sin consultar datos del comercio. `/admin/login` abre el acceso y `/admin/dashboard` el resumen con sesión. Ventas, inventario, caja, pagos, importación, análisis y configuración usan rutas bajo `/admin`, con permisos según el rol. Los enlaces antiguos de `/app.html` redirigen al panel. `/legacy.html` conserva la demostración aislada de Payments. [Rutas y ejecución](../../README.md#rutas-del-frontend).
+
+La integración de marca sigue en el worktree. El logo horizontal aparece en portada, acceso y pie de página. El símbolo A se usa en la barra lateral, navegación móvil y favicon. El círculo de ArveCoins aparece solo en indicadores y órdenes ARVE. Los PNG son **provisionales** por halos, pequeños huecos y píxeles sueltos en los bordes. [Capturas, revisión visual y órdenes simuladas](capturas/marca-react/README.md).
+
+### Verificaciones ejecutadas
+
+| Ronda | Resultado |
+| --- | --- |
+| Migración React | Pasaron `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` (57 pruebas). `npm run full:test -- test` pasó 9 subcasos HTTP/MySQL/RabbitMQ y su agrupador (10 en el contador del runner). `npm run test:legacy` pasó 3 pruebas HTTP y 3 de navegador. |
+| Navegador tras la migración | `npm run full:browser -- test` pasó 6 casos (3 en escritorio y 3 en móvil emulado). Cubrió los flujos A–D, el acceso directo y la recarga, inicio y cierre de sesión, y respuestas `401` sin sesión y `403` para operaciones restringidas al rol administrador. |
+| Integración de marca | Se repitieron lint, tipos, build y los 6 casos de Playwright en el perfil aislado. Se comprobaron los logos en portada, acceso, panel y pagos, el favicon y la ausencia del círculo de ArveCoins en importes USDT. Se verificaron portada y acceso a 320 px sin desbordamiento. Las dos órdenes simuladas de 10 ARVE quedaron pendientes, con una unidad reservada cada una y sin cobros. |
+| Documentos de la migración | Se renderizaron 8 diagramas Mermaid. Se revisaron las 19 páginas del informe y las 15 diapositivas en PDF y PPTX antes de integrar la marca. |
+
+Los conteos de las rondas del [21](#evidencia-histórica--perfil-aislado-del-21-de-noviembre) y [22 de noviembre](VERIFICACION_FINAL.md) corresponden a sus respectivos cortes. La [transferencia real de prueba en Shasta](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026) se verificó el 24 de noviembre. Las rondas de React y marca usaron simulación.
+
+### Pendiente para la entrega integrada
+
+- Revisar las capturas y decidir si se entregan los PNG provisionales. Si se requieren archivos definitivos, sustituirlos por una exportación del mismo diseño con transparencia y bordes limpios.
+- Guardar el incremento de marca y documentación en la rama de rediseño cuando se autorice. Integrar por avance rápido si `main` sigue siendo ancestro de la rama, conservando el commit `e1699de` con la evidencia de Shasta.
+- Actualizar las capturas del informe y la presentación para que correspondan a la marca aprobada. Regenerar y verificar el ZIP y el manifiesto desde la versión integrada. [Preparación de entrega](../../ENTREGA.md#aplicación-completa--versión-react).
+
+## Preparación universitaria · revisión de uso del 25 de noviembre de 2026
+
+Se recorrió la portada, el acceso y los módulos en escritorio y móvil emulado con el backend del perfil aislado. Se añadieron ayudas accesibles para los formularios, mensajes de resultados concretos, confirmación para movimientos manuales y una presentación de existencias con nombre, SKU, saldo disponible, reservado y mínimo. El filtro de movimientos muestra el SKU seleccionado. Se mantuvieron los contratos, roles, reglas de cobro y perfiles separados por activo.
+
+- Pasaron lint, comprobación de tipos, build y las 57 pruebas de código.
+- Pasaron los 9 subcasos HTTP/MySQL/RabbitMQ más el agrupador. Se volvió a demostrar el rechazo de duplicados de pago y la recuperación del broker con pagos simulados.
+- Playwright pasó 6 casos antes y 6 después de los ajustes (3 por dispositivo en cada ronda). La ronda posterior comprobó el filtro de movimientos, el rechazo visible por stock insuficiente, el CSV inválido, el acceso por rol y la vista previa de diez filas válidas en el CSV de demostración. [Capturas antes y después](capturas/usabilidad/README.md).
+- Una consulta SQL de solo lectura encontró un producto activo en el catálogo local, en ARVE y con saldo. Se preparó [un CSV de diez artículos](PRODUCTOS_DEMO.csv) en COP, ARVE y USDT. Solo se usó su vista previa en el perfil aislado. Los recorridos utilizaron comercios de prueba y no hubo transferencias blockchain.
+- Se añadieron la [guía de uso y pruebas](GUIA_DE_USO_Y_PRUEBAS.md) y la [clasificación de archivos y prioridades futuras](REVISION_DE_ENTREGA.md). El ZIP y la evidencia histórica de Shasta se conservaron.
+- Se movieron a la Papelera doce PNG temporales idénticos a sus copias persistentes. El inventario de archivos indica sus rutas y cómo recuperarlos.

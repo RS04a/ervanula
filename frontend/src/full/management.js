@@ -74,7 +74,14 @@ export async function settings(ctx) {
                   },
                 ],
                 ["asset", "Activo", { choices: ["USDT", "ARVE"] }],
-                ["address", "Dirección pública", { maxlength: 64 }],
+                [
+                  "address",
+                  "Dirección pública",
+                  {
+                    maxlength: 64,
+                    help: "Usa la dirección receptora de la red seleccionada. Comparte solo la dirección pública.",
+                  },
+                ],
               ],
               async (data) => {
                 if (
@@ -82,7 +89,7 @@ export async function settings(ctx) {
                     "¿Guardar esta dirección para futuras órdenes?",
                   )
                 )
-                  return;
+                  return false;
                 await ctx.post("merchant/wallets", data);
                 go({});
               },
@@ -106,9 +113,20 @@ export async function settings(ctx) {
                   minlength: 12,
                   maxlength: 128,
                   autocomplete: "new-password",
+                  help: "Usa al menos 12 caracteres.",
                 },
               ],
-              ["role", "Rol", { choices: ["CASHIER", "ADMIN"] }],
+              [
+                "role",
+                "Rol",
+                {
+                  choices: [
+                    ["CASHIER", "Cajero"],
+                    ["ADMIN", "Administrador"],
+                  ],
+                  help: "El administrador puede gestionar usuarios, catálogo e importaciones.",
+                },
+              ],
             ],
             async (data) => {
               await ctx.post("identity/users", data);
@@ -180,21 +198,35 @@ export async function imports(ctx) {
         "UTF-8 · hasta 250 filas y 60 kB. Los SKU existentes se rechazan; las existencias iniciales se registran como entradas.",
       ),
       button("Descargar plantilla", () =>
-        ctx.task(async () => {
-          const template = await get("imports/template");
-          const link = URL.createObjectURL(
-            new Blob([template.content], { type: "text/csv;charset=utf-8" }),
-          );
-          const download = document.createElement("a");
-          download.href = link;
-          download.download = template.filename;
-          download.click();
-          window.setTimeout(() => URL.revokeObjectURL(link), 1000);
-        }),
+        ctx.task(
+          async () => {
+            const template = await get("imports/template");
+            const link = URL.createObjectURL(
+              new Blob([template.content], { type: "text/csv;charset=utf-8" }),
+            );
+            const download = document.createElement("a");
+            download.href = link;
+            download.download = template.filename;
+            download.click();
+            window.setTimeout(() => URL.revokeObjectURL(link), 1000);
+          },
+          false,
+          "Plantilla enviada al navegador.",
+        ),
       ),
       form(
         "Ver vista previa",
-        [["file", "Archivo CSV", { type: "file", accept: ".csv,text/csv" }]],
+        [
+          [
+            "file",
+            "Archivo CSV",
+            {
+              type: "file",
+              accept: ".csv,text/csv",
+              help: "Descarga la plantilla para ver las columnas y el orden requerido. La vista previa muestra los errores antes de aplicar las filas.",
+            },
+          ],
+        ],
         async ({ file }) => {
           if (!file.size || file.size > 60000)
             throw new Error("Selecciona un CSV de hasta 60 kB");

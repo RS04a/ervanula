@@ -5,6 +5,7 @@ import { Landing } from "./landing.jsx";
 import "./tailwind.css";
 import "../full/style.css";
 import "./site.css";
+import "./brand.css";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>

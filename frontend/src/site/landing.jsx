@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { icon } from "../full/icons.js";
 import { adminLogin } from "../full/routes.js";
+import { BrandImage } from "./brand.jsx";
 
 const features = [
   [
@@ -40,10 +41,7 @@ const team = ["Alberto Russell", "Yalal Ajram Elneser"];
 function Logo() {
   return (
     <Link to="/" className="site-logo" aria-label="ARVELUNA, inicio">
-      <span>{icon("bag")}</span>
-      <strong>
-        arve<b>luna</b>
-      </strong>
+      <BrandImage variant="horizontal" />
     </Link>
   );
 }
@@ -109,7 +107,7 @@ export function Landing() {
                 </div>
                 <img
                   width="1440"
-                  height="1099"
+                  height="1104"
                   src="/media/panel-arveluna.png"
                   alt="Resumen del panel ARVELUNA con indicadores de ventas, caja, pagos e inventario."
                   fetchPriority="high"

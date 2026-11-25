@@ -1,5 +1,6 @@
 import { adminUrl } from "./routes.js";
 import {
+  assetLabel,
   button,
   callout,
   date,
@@ -105,7 +106,7 @@ export async function dashboard(ctx) {
                 el(
                   "div",
                   {},
-                  el("dt", {}, asset),
+                  el("dt", {}, assetLabel(asset)),
                   el("dd", {}, money(row.amountBase, asset)),
                 ),
               ),
@@ -291,12 +292,24 @@ export async function simulation(ctx) {
               [
                 "priceBasisPoints",
                 "Cambio de precio (puntos base)",
-                { type: "number", min: -10000, max: 100000, value: 0 },
+                {
+                  type: "number",
+                  min: -10000,
+                  max: 100000,
+                  value: 0,
+                  help: "Ejemplo: 1000 equivale a un aumento del 10 %.",
+                },
               ],
               [
                 "demandBasisPoints",
                 "Cambio de demanda (puntos base)",
-                { type: "number", min: -10000, max: 100000, value: 0 },
+                {
+                  type: "number",
+                  min: -10000,
+                  max: 100000,
+                  value: 0,
+                  help: "Ejemplo: −2000 equivale a una disminución del 20 %.",
+                },
               ],
             ],
             async ({ productId, ...values }) => {

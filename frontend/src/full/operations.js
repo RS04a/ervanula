@@ -1,5 +1,6 @@
 import { adminUrl } from "./routes.js";
 import {
+  assetLabel,
   assets,
   button,
   date,
@@ -33,7 +34,14 @@ const amount = (value) => ({
   inputmode: "decimal",
   pattern: "[0-9]+([.][0-9]{1,6})?",
   value,
+  help: "Usa punto decimal y omite separadores de miles. Ejemplo: 2500.50.",
 });
+const movementLabels = {
+  IN: "Entrada",
+  OUT: "Salida",
+  ADJUST: "Ajuste",
+  SALE: "Venta",
+};
 const text = (value) => ({ value, maxlength: 120 });
 const endpoint = (path, page) =>
   `${path}${path.includes("?") ? "&" : "?"}offset=${page}`;
@@ -43,9 +51,24 @@ export const productChoice = (products, current) => ({
 });
 function productFields(product) {
   return [
-    ["sku", "SKU", text(product?.sku)],
+    [
+      "sku",
+      "SKU",
+      {
+        ...text(product?.sku),
+        help: "Código único del producto. Ejemplo: CAFE-250.",
+      },
+    ],
     ["description", "Descripción", text(product?.description)],
-    ["asset", "Activo", { choices: assets, value: product?.asset }],
+    [
+      "asset",
+      "Activo",
+      {
+        choices: assets,
+        value: product?.asset,
+        help: "Moneda o token en que se vende el producto.",
+      },
+    ],
     [
       "price",
       "Precio unitario",
@@ -55,7 +78,14 @@ function productFields(product) {
           : "",
       ),
     ],
-    ["minimum", "Mínimo de existencias", count(product?.minimum)],
+    [
+      "minimum",
+      "Mínimo de existencias",
+      {
+        ...count(product?.minimum),
+        help: "Unidades que sirven de referencia para el diagnóstico de stock.",
+      },
+    ],
   ];
 }
 export async function products(ctx) {
@@ -99,7 +129,17 @@ export async function products(ctx) {
       "Catálogo",
       form(
         "Buscar",
-        [["search", "SKU o descripción", { required: false, value: search }]],
+        [
+          [
+            "search",
+            "SKU o descripción",
+            {
+              required: false,
+              value: search,
+              help: "Escribe parte del código o nombre. Vacío muestra todo el catálogo.",
+            },
+          ],
+        ],
         (data) => go({ search: data.search, page: 0, selected: null }),
       ),
       table(
@@ -108,6 +148,7 @@ export async function products(ctx) {
           "Descripción",
           "Precio",
           "Disponible",
+          "Reservado",
           "Mínimo",
           "Estado",
           ...(admin ? ["Acciones"] : []),
@@ -117,6 +158,7 @@ export async function products(ctx) {
           p.description,
           money(p.priceBase, p.asset, p.scale),
           p.balance?.available ?? 0,
+          p.balance?.reserved ?? 0,
           p.minimum,
           pill(p.active ? "Activo" : "Inactivo"),
           ...(admin
@@ -138,6 +180,9 @@ export async function products(ctx) {
               ]
             : []),
         ]),
+        search
+          ? "No se encontraron productos para esta búsqueda."
+          : "El catálogo todavía está vacío.",
       ),
       pager(state.page, rows, (page) => go({ page, selected: null })),
     ),
@@ -165,7 +210,12 @@ export async function inventory(ctx) {
     ),
     split(
       panel(
-        "Saldos",
+        "Existencias por producto",
+        el(
+          "p",
+          { class: "note" },
+          "Disponible: puedes usarlo en una venta. Reservado: está asignado a un checkout pendiente.",
+        ),
         form(
           "Buscar saldo",
           [
@@ -178,13 +228,28 @@ export async function inventory(ctx) {
           ({ stockSearch }) => go({ stockSearch, stockPage: 0 }),
         ),
         table(
-          ["SKU", "Disponible", "Reservado", "Historial"],
+          [
+            "SKU y descripción",
+            "Disponible",
+            "Reservado",
+            "Mínimo",
+            "Historial",
+          ],
           products.map((p) => [
-            p.sku,
+            el(
+              "span",
+              { class: "product-identity" },
+              el("strong", {}, p.sku),
+              el("span", {}, p.description),
+            ),
             p.balance?.available ?? 0,
             p.balance?.reserved ?? 0,
-            button("Filtrar", () => go({ filter: p.id, page: 0 })),
+            p.minimum,
+            button("Ver movimientos", () =>
+              go({ filter: p.id, filterSku: p.sku, page: 0 }),
+            ),
           ]),
+          "No hay productos para mostrar. Prueba otra búsqueda o abre Productos.",
         ),
         pager(state.stockPage ?? 0, products, (stockPage) => go({ stockPage })),
       ),
@@ -213,14 +278,29 @@ export async function inventory(ctx) {
                 [
                   "quantity",
                   "Unidades (con signo para ajuste)",
-                  { ...count(), min: -1000000 },
+                  {
+                    ...count(),
+                    min: -1000000,
+                    help: "Usa un entero positivo para entradas y salidas. En un ajuste, −2 descuenta dos unidades.",
+                  },
                 ],
-                ["reason", "Motivo", text()],
+                [
+                  "reason",
+                  "Motivo",
+                  {
+                    ...text(),
+                    help: "Ejemplos: reposición, avería o diferencia de conteo.",
+                  },
+                ],
               ],
-              ctx.referenced("inventory/movements", (data) => ({
-                ...data,
-                quantity: Number(data.quantity),
-              })),
+              ctx.referenced(
+                "inventory/movements",
+                (data) => ({
+                  ...data,
+                  quantity: Number(data.quantity),
+                }),
+                "¿Registrar este movimiento y actualizar las existencias?",
+              ),
             ),
           )
         : null,
@@ -228,18 +308,30 @@ export async function inventory(ctx) {
     panel(
       "Movimientos",
       state.filter
-        ? button("Quitar filtro", () => go({ filter: null, page: 0 }))
+        ? el(
+            "div",
+            { class: "actions" },
+            el(
+              "p",
+              { class: "note" },
+              `Movimientos de ${state.filterSku ?? short(state.filter)}`,
+            ),
+            button("Quitar filtro", () =>
+              go({ filter: null, filterSku: null, page: 0 }),
+            ),
+          )
         : null,
       table(
         ["Fecha", "Producto", "Tipo", "Unidades", "Motivo", "Usuario"],
         rows.map((m) => [
           date(m.createdAt),
           products.find((p) => p.id === m.productId)?.sku ?? short(m.productId),
-          m.kind,
+          movementLabels[m.kind] ?? m.kind,
           m.quantity,
           m.reason,
           short(m.userId),
         ]),
+        "Aún no hay movimientos para el filtro actual.",
       ),
       pager(state.page, rows, (page) => go({ page })),
     ),
@@ -346,7 +438,7 @@ export async function sales(ctx) {
             { class: "actions" },
             sale.items.length
               ? button(
-                  "Iniciar checkout",
+                  "Confirmar venta",
                   () =>
                     action(
                       `sales/sales/${sale.id}/checkout`,
@@ -381,7 +473,16 @@ export async function sales(ctx) {
         "Nueva venta",
         form(
           "Crear borrador",
-          [["asset", "Activo de la venta", { choices: assets }]],
+          [
+            [
+              "asset",
+              "Activo de la venta",
+              {
+                choices: assets,
+                help: "COP se cobra en efectivo con la caja abierta. ARVE y USDT crean una orden TRC-20.",
+              },
+            ],
+          ],
           async (data) => {
             const sale = await ctx.post("sales/sales", {
               asset: data.asset,
@@ -451,7 +552,16 @@ export async function cash(ctx) {
             ),
             form(
               "Cerrar caja",
-              [["amount", "Efectivo contado (COP)", amount()]],
+              [
+                [
+                  "amount",
+                  "Efectivo contado (COP)",
+                  {
+                    ...amount(),
+                    help: "Cuenta los billetes y monedas. Ejemplo: 155.00. El sistema calcula la diferencia.",
+                  },
+                ],
+              ],
               ctx.referenced(
                 "cash/close",
                 (data) => ({ ...data, sessionId: current.id }),
@@ -463,7 +573,16 @@ export async function cash(ctx) {
             "Caja cerrada",
             form(
               "Abrir caja",
-              [["amount", "Saldo inicial (COP)", amount("0")]],
+              [
+                [
+                  "amount",
+                  "Saldo inicial (COP)",
+                  {
+                    ...amount("0"),
+                    help: "Anota el efectivo físico disponible antes de la primera venta.",
+                  },
+                ],
+              ],
               ctx.referenced("cash/open"),
             ),
           ),
@@ -486,10 +605,14 @@ export async function cash(ctx) {
                 ["amount", "Monto (COP)", amount()],
                 ["reason", "Motivo", text()],
               ],
-              ctx.referenced("cash/movements", (data) => ({
-                ...data,
-                sessionId: current.id,
-              })),
+              ctx.referenced(
+                "cash/movements",
+                (data) => ({
+                  ...data,
+                  sessionId: current.id,
+                }),
+                "¿Registrar este ingreso o egreso de efectivo?",
+              ),
             ),
           )
         : null,
@@ -508,6 +631,7 @@ export async function cash(ctx) {
             s.differenceBase,
           ].map((v) => money(v, "COP")),
         ]),
+        "Aún no se han abierto sesiones de caja.",
       ),
       pager(state.page, sessions, (page) => go({ page })),
     ),
@@ -562,6 +686,11 @@ export async function payments(ctx) {
       "Consulta y verifica las órdenes TRC-20 de cada venta.",
     ),
     el("div", { class: "status-strip" }, ...paymentProfiles(settings)),
+    el(
+      "p",
+      { class: "note" },
+      "Simulación acepta referencias de demostración. TronGrid comprueba hashes públicos en la red indicada.",
+    ),
     settings.network !== "mainnet" ||
     (settings.arve && settings.arve.network !== "mainnet")
       ? callout(
@@ -579,10 +708,13 @@ export async function payments(ctx) {
             el(
               "strong",
               {},
-              money(
-                order.amountBaseUnits,
+              assetLabel(
                 order.tokenSymbol,
-                order.tokenDecimals,
+                money(
+                  order.amountBaseUnits,
+                  order.tokenSymbol,
+                  order.tokenDecimals,
+                ),
               ),
             ),
             button("Actualizar orden", () => go({})),
@@ -597,8 +729,10 @@ export async function payments(ctx) {
               : []),
           ]),
           button("Copiar dirección", () =>
-            ctx.task(() =>
-              navigator.clipboard.writeText(order.recipientAddress),
+            ctx.task(
+              () => navigator.clipboard.writeText(order.recipientAddress),
+              false,
+              "Dirección copiada.",
             ),
           ),
           order.confirmedAt && order.status !== "CONFIRMED"
@@ -624,7 +758,10 @@ export async function payments(ctx) {
                   [
                     "transactionHash",
                     "Hash de transacción",
-                    { maxlength: 100 },
+                    {
+                      maxlength: 100,
+                      help: "Pega el identificador de la transacción de esta orden. En TronGrid se usan 64 caracteres hexadecimales.",
+                    },
                   ],
                 ],
                 async (data) => {
@@ -660,7 +797,10 @@ export async function payments(ctx) {
         orders.map((o) => [
           date(o.createdAt),
           short(o.saleId),
-          money(o.amountBaseUnits, o.tokenSymbol, o.tokenDecimals),
+          assetLabel(
+            o.tokenSymbol,
+            money(o.amountBaseUnits, o.tokenSymbol, o.tokenDecimals),
+          ),
           pill(o.status),
           el("a", { href: adminUrl("payments", o.id) }, "Abrir orden"),
         ]),

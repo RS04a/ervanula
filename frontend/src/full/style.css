@@ -84,6 +84,9 @@ a:hover {
   font-size: 0.73rem;
   letter-spacing: 0.12em;
 }
+.breadcrumb .brand-image {
+  display: none;
+}
 .crumb-divider,
 #today {
   color: var(--muted);
@@ -115,23 +118,10 @@ a:hover {
   gap: 0.75rem;
   padding-inline: 0.4rem;
   color: var(--text);
-  font-size: 1.46rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: -0.055em;
+  letter-spacing: 0.035em;
   text-decoration: none;
-}
-.brand-mark,
-.login-mark {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  aspect-ratio: 1;
-  border-radius: 0.65rem;
-  background: var(--action);
-  color: white;
-}
-.brand-accent {
-  color: var(--accent);
 }
 .store-card,
 .account {
@@ -240,14 +230,6 @@ a:hover {
 }
 .shell:not(.signed-in) .form-grid {
   grid-template-columns: 1fr;
-}
-.login-mark {
-  width: 3rem;
-  margin-bottom: 1rem;
-}
-.login-mark .icon {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 .page-header {
   margin-bottom: 1.4rem;
@@ -404,6 +386,25 @@ h3 {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 620;
+}
+.form-field {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.35rem;
+}
+.field-help {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.42;
+  margin: 0;
+}
+.product-identity {
+  display: grid;
+  gap: 0.2rem;
+}
+.product-identity > span {
+  color: var(--muted);
 }
 .form-grid input,
 .form-grid select {
@@ -676,6 +677,13 @@ td button {
   }
   .menu-toggle {
     display: inline-flex;
+  }
+  .breadcrumb .brand > span {
+    display: none;
+  }
+  .breadcrumb .brand-image {
+    display: block;
+    width: 1.85rem;
   }
   .split,
   .split-emphasis {

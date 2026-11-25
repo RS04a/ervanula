@@ -1,12 +1,14 @@
-# Guía para probar ARVELUNA y explicarlo al profesor
+# Guía de la demo histórica de Payments
+
+Para la aplicación completa con React y sesión bajo `/admin`, usar el [README](../README.md#ejecutar-la-aplicación-completa) y el [guion A–D](full-app/DEMO.md).
 
 Esta guía corresponde al proveedor **simulado**. Los hashes eligen escenarios ficticios; el sistema revisa los datos que devuelve el simulador. No se envía dinero real. TronGrid es una alternativa implementada y probada offline; estos ejemplos no son hashes reales de blockchain.
 
 ## 1. Abrir la aplicación
 
-Con el proyecto iniciado, abre:
+Con el perfil histórico de Payments iniciado según el [inicio rápido](../README.md#inicio-rápido), abre:
 
-- Aplicación: http://localhost:5173
+- Demo histórica: http://localhost:5173/legacy.html
 - Swagger: http://localhost:3000/docs
 - Healthcheck: http://localhost:3000/api/health
 

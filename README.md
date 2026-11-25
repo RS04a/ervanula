@@ -21,7 +21,7 @@ npm run full:provision
 npm run full:dev
 ```
 
-En otra terminal, ejecutar `npm run full:frontend` y abrir **http://localhost:5173/**. `npm run build` seguido de `npm run full:start` ejecuta el backend compilado. `Ctrl+C` detiene los procesos y `npm run full:stop` detiene los contenedores preservando sus datos.
+En otra terminal, ejecutar `npm run full:frontend`. Abrir la [portada](http://localhost:5173/) o ir directamente al [inicio de sesión del panel](http://localhost:5173/admin/login). `npm run build` seguido de `npm run full:start` ejecuta el backend compilado. `Ctrl+C` detiene los procesos y `npm run full:stop` detiene los contenedores preservando sus datos.
 
 | Componente | Puerto local | Puerto de prueba |
 | --- | ---: | ---: |
@@ -64,6 +64,7 @@ Con el backend de prueba en marcha, ejecutar `npm run full:test -- test`. En otr
 - `/` presenta el proyecto, al equipo y los módulos sin requerir sesión.
 - `/admin/login` inicia sesión. `/admin/dashboard` abre el resumen protegido.
 - `/admin/inventario`, `/admin/inventario/productos`, `/admin/ventas`, `/admin/caja`, `/admin/pagos`, `/admin/importacion`, `/admin/analisis` y `/admin/configuracion` abren los módulos según el rol.
+- `/admin/analisis/simulaciones` y `/admin/analisis/recomendaciones` abren esas vistas directamente. Ventas, pagos e importación admiten enlaces a registros por identificador.
 - `/app.html` redirige al panel y conserva los enlaces anteriores por fragmento de URL.
 - `/legacy.html` abre la interfaz histórica con el perfil de Payments correspondiente.
 
@@ -71,10 +72,13 @@ React Router conserva la ruta original al pedir inicio de sesión. Vite sirve la
 
 ## Documentación y demo
 
-- [Guion A–D](docs/full-app/DEMO.md), [evidencia inicial](docs/full-app/PROGRESO.md) y [cierre auditado](docs/full-app/CIERRE_AUDITADO.md) y [verificación final](docs/full-app/VERIFICACION_FINAL.md).
+- [Guía de uso y pruebas](docs/full-app/GUIA_DE_USO_Y_PRUEBAS.md) y [CSV de demostración](docs/full-app/PRODUCTOS_DEMO.csv).
+- [Revisión de preparación de entrega](docs/full-app/REVISION_DE_ENTREGA.md) y [capturas antes y después](docs/full-app/capturas/usabilidad/README.md).
+- [Guion A–D](docs/full-app/DEMO.md), [estado y verificaciones por fecha](docs/full-app/PROGRESO.md), [cierre auditado](docs/full-app/CIERRE_AUDITADO.md) y [verificación final](docs/full-app/VERIFICACION_FINAL.md).
 - [C4 Contexto](docs/full-app/C4-contexto.md), [Contenedores](docs/full-app/C4-contenedores.md), [Componentes](docs/full-app/C4-componentes.md), [propiedad de datos](docs/full-app/C4-datos.md), [Payments](docs/full-app/C4-payments.md), [dependencias de código](docs/full-app/Clean-Architecture.md) y [secuencia](docs/full-app/secuencia.md).
 - [Informe técnico y mapa de archivos](docs/full-app/TECNICO.md) y [contratos, eventos y permisos](docs/full-app/CONTRATOS.md).
 - [PDF técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf), [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) y [PDF de defensa](docs/full-app/entrega/ARVELUNA_Defensa.pdf).
+- [Capturas de la marca provisional en React](docs/full-app/capturas/marca-react/README.md) y [estado del paquete](ENTREGA.md#aplicación-completa--versión-react).
 - [ArveCoins en Shasta y evidencia de la prueba](docs/full-app/ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026). El checkout USDT usa el simulador por defecto. El perfil ARVE es independiente.
 
 El 24 de noviembre de 2026, Payments verificó por TronGrid una transferencia de **10 ARVE en Shasta TESTNET**, con tokens de prueba sin valor económico. La orden quedó `CONFIRMED` y la venta `COMPLETED`. Hubo un único consumo de inventario y un único cobro digital. La caja física en COP quedó intacta. El segundo envío del mismo hash conservó los registros. La verificación se hizo sin dinero real y el contrato de la demo se desplegó únicamente en Shasta.
@@ -140,7 +144,8 @@ El escenario `pending` permanece pendiente en el adaptador de demo; una prueba a
 ## Arquitectura y estructura
 
 ```text
-frontend/                         HTML semántico, JavaScript modular, Tailwind CLI y Vite
+frontend/legacy.html               Entrada de la demo de Payments con HTML, Tailwind CLI y Vite
+frontend/src/app.js                JavaScript modular de la demo de Payments
 backend/apps/api-gateway/          Proceso público NestJS; cliente HTTP singleton
 backend/apps/payments-service/src/
   domain/                         Entidades, errores, reglas de monto y estados

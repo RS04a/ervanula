@@ -47,6 +47,8 @@ React y React Router separan la portada pública `/` del panel con sesión. Vite
 
 La portada presenta al equipo y los módulos existentes y no lee datos del comercio. El panel oculta acciones restringidas según el rol. El Gateway valida sesión y CSRF. Los servicios aplican el rol y el alcance del comercio aunque se consulte la API directamente. [Componentes del frontend](C4-frontend.md).
 
+Los logos integrados en el frontend son provisionales por defectos visibles al ampliar sus bordes. El símbolo de ArveCoins identifica únicamente los indicadores y pagos en ARVE. [Capturas y revisión de marca](capturas/marca-react/README.md).
+
 ## Identidad y autorización
 
 Scrypt de Node con salt de 128 bits, parámetros versionados y comparación de longitud fija. Token aleatorio de 256 bits y digest SHA-256 en la sesión SQL. La cookie es host-only, HttpOnly y SameSite Strict, caduca a ocho horas y se limpia al salir. Para escrituras, el Gateway valida origen exacto, tipo de contenido y cabecera personalizada. Vite reenvía `/api` a Gateway en el mismo origen. Los servicios reciben la sesión desde el adaptador autenticado, consultan Identity con timeout, y filtran operaciones por el comercio resultante.

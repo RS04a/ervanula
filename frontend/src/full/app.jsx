@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api.js";
 import { button, feedbackMessage, form, heading, id } from "./ui.js";
 import { icon } from "./icons.js";
+import { BrandImage } from "../site/brand.jsx";
 import { adminLogin, adminUrl, readAdminRoute } from "./routes.js";
 import { cash, inventory, payments, products, sales } from "./operations.js";
 import { imports, settings } from "./management.js";
@@ -57,17 +58,6 @@ const sections = [
     routes: ["diagnostics", "simulation", "recommendations"],
   },
 ];
-
-function Brand({ className = "sidebar-brand" }) {
-  return (
-    <Link className={className} to="/">
-      <span className="brand-mark">{icon("bag")}</span>
-      <span>
-        arve<span className="brand-accent">luna</span>
-      </span>
-    </Link>
-  );
-}
 
 function useSession() {
   const [session, setSession] = useState({ status: "loading" });
@@ -131,7 +121,9 @@ function Entry({ children, busy = false }) {
     <div className="shell">
       <SkipLink content={content} />
       <header className="top">
-        <Brand />
+        <Link to="/" aria-label="ARVELUNA, inicio">
+          <BrandImage variant="horizontal" />
+        </Link>
         <Link className="entry-back" to="/">
           Ir al sitio público
         </Link>
@@ -146,7 +138,6 @@ function Entry({ children, busy = false }) {
 function Login({ refresh }) {
   return (
     <Entry>
-      <div className="login-mark">{icon("bag")}</div>
       {heading(
         "Iniciar sesión",
         "Panel del comercio",
@@ -297,13 +288,13 @@ function AdminWorkspace({
   const focusNext = useRef(true);
   const refreshView = useCallback(() => setRevision((value) => value + 1), []);
   const task = useCallback(
-    async (work, reload = false) => {
+    async (work, reload = false, success = "Operación registrada.") => {
       if (activeTask.current) return;
       activeTask.current = true;
       setNotice({ text: "Procesando…" });
       try {
         await work();
-        setNotice({ text: "Operación registrada." });
+        setNotice({ text: success });
         if (reload) refreshView();
       } catch (error) {
         if (error.status === 401) signOut();
@@ -379,7 +370,7 @@ function AdminWorkspace({
                 referenced: (path, map = (data) => data, message) => {
                   let reference = id();
                   return async (data) => {
-                    if (message && !window.confirm(message)) return;
+                    if (message && !window.confirm(message)) return false;
                     await post(path, { ...map(data), reference });
                     reference = id();
                     go({});
@@ -448,8 +439,9 @@ function AdminWorkspace({
           {icon("menu")} Menú
         </button>
         <div className="breadcrumb">
-          <Link className="brand" to="/">
-            ARVELUNA
+          <Link className="brand" to="/" aria-label="ARVELUNA, inicio">
+            <span>ARVELUNA</span>
+            <BrandImage variant="symbol" decorative />
           </Link>
           <span className="crumb-divider" aria-hidden="true">
             /
@@ -471,7 +463,10 @@ function AdminWorkspace({
         </time>
       </header>
       <aside ref={sidebar} className="sidebar" id="sidebar" data-open={menu}>
-        <Brand />
+        <Link className="sidebar-brand" to="/" aria-label="ARVELUNA, inicio">
+          <BrandImage variant="symbol" decorative />
+          <span>ARVELUNA</span>
+        </Link>
         <div className="store-card">
           <span className="store-icon">{icon("store")}</span>
           <div>

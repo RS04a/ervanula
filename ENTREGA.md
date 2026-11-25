@@ -1,14 +1,28 @@
-# ARVELUNA — Entrega 1
+# Entregas de ARVELUNA
+
+## Aplicación completa · versión React
+
+La rama `feat/frontend-redesign` contiene el frontend React + Vite + Tailwind. Para ejecutarlo, seguir el [README](README.md#ejecutar-la-aplicación-completa). La portada está en `/`, el acceso en `/admin/login` y el resumen protegido en `/admin/dashboard`. El [guion de la aplicación completa](docs/full-app/DEMO.md) cubre los recorridos A–D.
+
+- [Informe técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf) y presentación [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) / [PDF](docs/full-app/entrega/ARVELUNA_Defensa.pdf). Estos documentos se generaron para la migración React antes de integrar los logos.
+- [Capturas de la marca provisional](docs/full-app/capturas/marca-react/README.md) y [registro de verificación por fecha](docs/full-app/PROGRESO.md).
+- [Evidencia de Shasta TESTNET del 24 de noviembre de 2026](docs/full-app/ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).
+
+El ZIP existente `ARVELUNA_App_Completa.zip` corresponde a un corte anterior. Una vez autorizada la integración, ejecutar `npm run full:package` desde el árbol integrado para regenerar y verificar el ZIP y su manifiesto. Si la entrega incluye los logos aprobados, actualizar primero las capturas que usa `npm run full:documents` y revisar el informe y la presentación regenerados.
+
+## Entrega 1 histórica · Payments
+
+El registro siguiente corresponde al MVP de Payments. Para abrir esa demo con el código actual y su perfil separado, usar `/legacy.html`.
 
 **Integrantes:** Alberto Russell y Yalal Ajram Elneser.
 
-## Qué se entrega
+### Qué se entrega
 
 MVP ejecutable de verificación de órdenes de pago USDT TRC-20: API Gateway y Payments Service NestJS separados, Payments DB MySQL con Prisma y migraciones, proveedores simulado y TronGrid opcional de solo lectura, frontend HTML/JavaScript/Tailwind CLI, pruebas automatizadas y documentación de defensa.
 
 Incluye creación/consulta de órdenes, verificación autoritativa del hash mediante el proveedor seleccionado, validación de red/token/receptor/monto/confirmaciones/vigencia, estados controlados, idempotencia, evidencia persistente, auditoría y errores recuperables.
 
-## Cómo ejecutar después de descomprimir
+### Cómo ejecutar después de descomprimir
 
 Requisitos: Node.js 24+, npm 11 y Docker Desktop activo. Chrome para pruebas de navegador (configurable con CHROME_PATH).
 
@@ -26,22 +40,22 @@ npm start
 
 `env:init` genera contraseñas locales aleatorias y un `.env` privado; no sobrescribe un archivo existente. El ZIP no contiene `.env` ni contraseñas configuradas. Si el puerto 3306 está ocupado por una base previa, detener únicamente su servicio o configurar otra instancia sin eliminar sus datos. Las migraciones se aplican exclusivamente a la base local indicada en DATABASE_URL.
 
-## Enlaces locales
+### Enlaces locales
 
-- Frontend: http://localhost:5173
+- Frontend en esta entrega histórica: http://localhost:5173
 - Swagger público: http://localhost:3000/docs
 - Healthcheck Gateway → Payments → MySQL: http://localhost:3000/api/health
 - Swagger interno: http://localhost:3001/docs
 
 Crear una orden con los valores del formulario (10.00 USDT y dirección de demo) y verificar un hash nuevo `demo:valid:entrega-001`. Ver el [guion completo](docs/demo-script.md), con pago válido, hash duplicado, rechazo y recuperación.
 
-## Patrones y arquitectura
+### Patrones y arquitectura
 
 Microservices, API Gateway, Database per Service, Strategy, Proxy, Singleton administrado por Nest y Repository/Dependency Inversion. La [tabla de patrones](docs/patterns.md) identifica archivos, pruebas y trade-offs. Payments separa dominio, aplicación, infraestructura y presentación; el Gateway no importa Prisma.
 
 Diagramas: [C4 Context](docs/c4-context.md), [Containers](docs/c4-containers.md), [Components](docs/c4-components.md) y [secuencia](docs/sequence-payment-verification.md).
 
-## Verificación
+### Verificación
 
 ```bash
 npm run lint
@@ -55,24 +69,24 @@ Resultados ejecutados en esta etapa: 52 unitarias, 3 pruebas HTTP de integració
 
 Los resultados de esta revisión y la validación del ZIP se registran en [docs/verification.md](docs/verification.md). Las pruebas HTTP requieren MySQL migrado; las de navegador compilan, esperan el healthcheck y verifican frontend y diagramas. Las capturas incluidas son evidencia de demo, no datos de MySQL.
 
-## Limitaciones
+### Limitaciones
 
 **El simulado sigue siendo el proveedor predeterminado. TronGridPaymentProvider está implementado y probado con mocks/fixtures; la comprobación en vivo sigue pendiente.** No se consultó la cadena real ni se ejecutaron transferencias. Demo local sin autenticación ni preparación de producción. La expiración se procesa al verificar; no existe un monitor blockchain automático. No se implementan ventas, inventario, caja ni identidad.
 
 El paquete excluye node_modules, .env, .git, dist, coverage, logs, archivos temporales, volúmenes y datos locales. AGENTS.md se conserva íntegro, incluidos sus ejemplos ilustrativos de configuración; estos no son credenciales privadas del entorno.
 
-## Integración opcional TronGrid
+### Integración opcional TronGrid
 
 Configurar `PAYMENT_PROVIDER=trongrid`, `TRON_NETWORK`, `TRONGRID_BASE_URL`, `TRC20_TOKEN_CONTRACT` y `TRON_MIN_CONFIRMATIONS`; `TRONGRID_API_KEY` se guarda solo en `.env` si es necesaria. Las variables previas BLOCKCHAIN_PROVIDER/USDT_CONTRACT_ADDRESS/MIN_CONFIRMATIONS siguen admitidas. [Protocolo, estados y prueba segura](docs/trongrid.md). No se implementó firma, creación o envío de transacciones.
 
-## Documento técnico y paquete final
+### Documento técnico y paquete final
 
 [Documento técnico completo](docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.md) · [PDF de 30 páginas](docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.pdf) · [Evidencia de esta revisión](docs/documentation-verification.md).
 
 La carpeta `ENTREGA_1_ARVELUNA` y `ARVELUNA_Entrega_1.zip` contienen las fuentes actuales, nueve diagramas SVG con sus fuentes Mermaid y el PDF. Para reproducir el empaquetado, instalar `scripts/document-requirements.txt` en un entorno virtual y ejecutar `python scripts/package-delivery.py`. No se creó commit ni se publicó el proyecto.
 
 
-## Defensa C4 — revisión del 25 de octubre de 2026
+### Defensa C4 — revisión del 25 de octubre de 2026
 
 - [Presentación PowerPoint (12 diapositivas)](ARVELUNA_Arquitectura_C4_Entrega_1.pptx).
 - [Presentación PDF horizontal](ARVELUNA_Arquitectura_C4_Entrega_1.pdf).

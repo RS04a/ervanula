@@ -46,11 +46,10 @@ async function product(
   price: string,
   stock: string,
 ) {
+  const description = sku === "CAFE" ? "Café molido" : "Producto digital";
   await nav(page, "Productos");
   await page.getByLabel("SKU", { exact: true }).fill(sku);
-  await page
-    .getByLabel("Descripción", { exact: true })
-    .fill(sku === "CAFE" ? "Café molido" : "Producto digital");
+  await page.getByLabel("Descripción", { exact: true }).fill(description);
   await page
     .getByRole("combobox", { name: "Activo", exact: true })
     .selectOption(asset);
@@ -63,10 +62,7 @@ async function product(
   await nav(page, "Inventario");
   await page
     .getByRole("combobox", { name: "Producto", exact: true })
-    .selectOption({
-      label:
-        sku === "CAFE" ? "CAFE · Café molido" : "DIGITAL · Producto digital",
-    });
+    .selectOption({ label: `${sku} · ${description}` });
   await page.getByLabel("Unidades").fill(stock);
   await page.getByLabel("Motivo").fill("Lote inicial");
   await page.getByRole("button", { name: "Registrar", exact: true }).click();
@@ -90,7 +86,7 @@ async function checkout(
     .selectOption({ label: product });
   await page.getByLabel("Cantidad", { exact: true }).fill(quantity);
   await page.getByRole("button", { name: "Guardar artículo" }).click();
-  await page.getByRole("button", { name: "Iniciar checkout" }).click();
+  await page.getByRole("button", { name: "Confirmar venta" }).click();
   await expect(
     page
       .getByText(asset === "COP" ? "COMPLETED" : "AWAITING_PAYMENT", {
@@ -122,6 +118,32 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
       page.getByRole("heading", { name: "Caja abierta" }),
     ).toBeVisible();
     await product(page, "CAFE", "COP", "30", "4");
+    await expect(page.getByLabel("Unidades")).toHaveAccessibleDescription(
+      /entero positivo/,
+    );
+    await page
+      .getByRole("button", { name: "Ver movimientos", exact: true })
+      .click();
+    await expect(
+      page.getByText("Movimientos de CAFE", { exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Quitar filtro" }).click();
+    await expect(
+      page.getByText("Movimientos de CAFE", { exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("combobox", { name: "Tipo", exact: true })
+      .selectOption("OUT");
+    await page.getByLabel("Unidades").fill("5");
+    await page.getByLabel("Motivo").fill("Prueba de stock insuficiente");
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect(page.getByRole("alert")).toHaveText(
+      "Existencias insuficientes",
+    );
+    await expect(
+      page.getByRole("cell", { name: "Prueba de stock insuficiente" }),
+    ).toHaveCount(0);
+    await page.getByLabel("Motivo").clear();
     await capture(page, info, "inventario");
     await checkout(page, "COP", "CAFE · Café molido", "2");
     await capture(page, info, "ventas");
@@ -227,6 +249,39 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     ).toBeVisible();
     await capture(page, info, "resumen");
   });
+  await test.step("Marca de ArveCoins en una orden ARVE de prueba", async () => {
+    await nav(page, "Configuración");
+    await page
+      .getByRole("combobox", { name: "Red TRON" })
+      .selectOption("shasta");
+    await page
+      .getByRole("combobox", { name: "Activo", exact: true })
+      .selectOption("ARVE");
+    await page
+      .getByLabel("Dirección pública")
+      .fill("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8");
+    await page.getByRole("button", { name: "Guardar billetera" }).click();
+    await expect(
+      page
+        .getByRole("row")
+        .filter({ hasText: "ARVE" })
+        .getByRole("cell", { name: "TJRabPrwbZy45sbavfcjinPJC18kjpRTv8" }),
+    ).toBeVisible();
+    await product(page, "TOKEN", "ARVE", "10", "2");
+    await checkout(page, "ARVE", "TOKEN · Producto digital", "1");
+    await page.getByRole("link", { name: "Ver orden de pago" }).click();
+    const profile = page.getByText("ARVE · Shasta TESTNET · Simulación", {
+      exact: true,
+    });
+    await expect(profile.locator("img")).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: "10.000000 ARVE" }).locator("img"),
+    ).toHaveAttribute("src", "/brand/arvecoins-token.png");
+    await expect(
+      page.getByRole("cell", { name: "10.000000 USDT" }).locator("img"),
+    ).toHaveCount(0);
+    await capture(page, info, "pagos-arve");
+  });
   await test.step("filtros, paginación y recarga con la sesión activa", async () => {
     for (let index = 0; index < 25; index++) {
       const response = await page.request.post("/api/inventory/products", {
@@ -260,6 +315,19 @@ test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
     await expect(
       page.getByRole("cell", { name: "PAYMENT_VERIFIED" }),
     ).toBeVisible();
+  });
+  await test.step("El CSV de demostración se valida en el importador real", async () => {
+    await nav(page, "Importación");
+    await page
+      .getByLabel("Archivo CSV")
+      .setInputFiles("docs/full-app/PRODUCTOS_DEMO.csv");
+    await page.getByRole("button", { name: "Ver vista previa" }).click();
+    await expect(
+      page.getByRole("cell", { name: "PENDING", exact: true }),
+    ).toHaveCount(10);
+    await expect(
+      page.getByRole("cell", { name: "INVALID", exact: true }),
+    ).toHaveCount(0);
   });
   if (
     (await menu.isVisible()) &&
@@ -395,6 +463,18 @@ test("portada pública y rutas privadas de administración", async ({
     if (path.startsWith("/api/")) apiRequests.push(path);
   });
   await page.goto("/");
+  for (const area of ["banner", "contentinfo"] as const) {
+    const logo = page.getByRole(area).getByAltText("ARVELUNA", { exact: true });
+    await expect(logo).toBeVisible();
+    await expect(logo).toHaveJSProperty("naturalWidth", 2152);
+    expect((await logo.boundingBox())?.width).toBeGreaterThanOrEqual(120);
+  }
+  const favicon = "/brand/arveluna-symbol.png";
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    "href",
+    favicon,
+  );
+  expect((await page.request.get(favicon)).ok()).toBeTruthy();
   await expect(
     page.getByRole("heading", { name: "Gestiona tu comercio con claridad." }),
   ).toBeVisible();
@@ -417,6 +497,7 @@ test("portada pública y rutas privadas de administración", async ({
   await expect(
     page.getByRole("heading", { name: "Iniciar sesión" }),
   ).toBeVisible();
+  await expect(page.getByRole("banner").getByAltText("ARVELUNA")).toBeVisible();
   await capture(page, info, "login");
   const protectedRoutes = [
     "/admin",
@@ -460,7 +541,15 @@ test("portada pública y rutas privadas de administración", async ({
     page.getByRole("heading", { name: "Caja", exact: true }),
   ).toBeVisible();
   const menu = page.getByRole("button", { name: "Menú", exact: true });
-  if (await menu.isVisible()) await menu.click();
+  if (await menu.isVisible()) {
+    await expect(
+      page.getByRole("banner").locator(".brand-image--symbol"),
+    ).toBeVisible();
+    await menu.click();
+  }
+  await expect(
+    page.getByRole("complementary").locator(".brand-image--symbol"),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Salir", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/login$/);
   expect((await page.request.get("/api/identity/session")).status()).toBe(401);
