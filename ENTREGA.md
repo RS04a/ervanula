@@ -2,13 +2,13 @@
 
 ## Aplicación completa · versión React
 
-La rama `feat/frontend-redesign` contiene el frontend React + Vite + Tailwind. Para ejecutarlo, seguir el [README](README.md#ejecutar-la-aplicación-completa). La portada está en `/`, el acceso en `/admin/login` y el resumen protegido en `/admin/dashboard`. El [guion de la aplicación completa](docs/full-app/DEMO.md) cubre los recorridos A–D.
+El cierre académico del 25 de noviembre de 2026 incluye el frontend React + Vite + Tailwind integrado en `main`. Para ejecutarlo, seguir el [README](README.md#ejecutar-la-aplicación-completa). La portada está en `/`, el acceso en `/admin/login` y el resumen protegido en `/admin/dashboard`. El [guion de la aplicación completa](docs/full-app/DEMO.md) cubre los recorridos A–D.
 
-- [Informe técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf) y presentación [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) / [PDF](docs/full-app/entrega/ARVELUNA_Defensa.pdf). Estos documentos se generaron para la migración React antes de integrar los logos.
+- [Informe técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf) y presentación [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) / [PDF](docs/full-app/entrega/ARVELUNA_Defensa.pdf). Incluyen capturas del frontend integrado. Los logos provisionales se aceptaron para esta entrega académica.
 - [Capturas de la marca provisional](docs/full-app/capturas/marca-react/README.md) y [registro de verificación por fecha](docs/full-app/PROGRESO.md).
 - [Evidencia de Shasta TESTNET del 24 de noviembre de 2026](docs/full-app/ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).
 
-El ZIP existente `ARVELUNA_App_Completa.zip` corresponde a un corte anterior. Una vez autorizada la integración, ejecutar `npm run full:package` desde el árbol integrado para regenerar y verificar el ZIP y su manifiesto. Si la entrega incluye los logos aprobados, actualizar primero las capturas que usa `npm run full:documents` y revisar el informe y la presentación regenerados.
+El paquete `ARVELUNA_App_Completa.zip` se genera con `npm run full:package` en el árbol integrado, junto con su [manifiesto](docs/full-app/entrega/MANIFIESTO.txt). El [informe de dependencias](docs/full-app/AUDITORIA_DEPENDENCIAS.md) registra las correcciones de lint y PowerPoint, con cero entradas en ambas auditorías de npm.
 
 ## Entrega 1 histórica · Payments
 

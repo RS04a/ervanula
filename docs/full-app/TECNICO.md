@@ -2,7 +2,7 @@
 
 **Universidad del Norte · Diseño de Software 2**  
 **Alberto Russell y Yalal Ajram Elneser**  
-**Versión React · 25 de noviembre de 2026**
+**Cierre académico · 25 de noviembre de 2026**
 
 ARVELUNA reúne identidad, catálogo, existencias, ventas, caja, pagos, importación y análisis operativo para pequeños comercios. Ejecuta HTTP para consultas y comandos interservicio que necesitan respuesta. Usa RabbitMQ para propagar hechos confirmados. Payments verifica transferencias públicas y conserva evidencia.
 
@@ -74,6 +74,8 @@ Los productos admiten cantidades enteras. El saldo separa disponible de reservad
 | `REVIEW` | Transferencia tardía registrada y visible para revisión manual. |
 
 La saga reclama filas mediante lease, reintenta pasos recuperables y protege su transición con estado y token de lease. Un resultado confirmado conserva su evidencia si inventario o caja sufren un fallo. La orden de pago persiste activo, red, contrato, receptor, monto y escala. Sales contrasta el evento con la orden autoritativa de Payments por HTTP y aplica una transición según su snapshot local. Si Payments no responde, conserva la venta y la entrega se reintenta. Un mensaje agotado queda en DLQ para inspección y reentrega controlada. Usar dos activos en una venta produce conflicto. La orden no acepta hashes ya asignados y la verificación usa un número de versión en SQL. La expiración programada genera un hecho que libera la reserva. Un hash confirmado después del vencimiento conserva evidencia y lleva a revisión, sin cerrar la venta.
+
+En el perfil aislado, dos ventas en efectivo tardaron 16,706 s y 19,033 s desde el borrador hasta `COMPLETED`. El tiempo incluye la finalización asíncrona. Son observaciones de prueba. [Método y resultados](AUDITORIA_DEPENDENCIAS.md#comprobación-de-tiempos-en-playwright).
 
 El saldo físico depende solo de COP. Cash Register serializa cierre e ingreso usando el mismo registro de caja. Si el cierre ocurre antes del ingreso, el cobro en curso falla de forma explícita y se libera la reserva. Si el ingreso ganó, el esperado incluye el cobro. La referencia sigue devolviendo ese movimiento tras el cierre. El pago digital se registra con su activo y una sesión nula.
 

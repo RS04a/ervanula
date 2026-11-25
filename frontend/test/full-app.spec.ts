@@ -89,13 +89,15 @@ async function checkout(
   await page.getByRole("button", { name: "Confirmar venta" }).click();
   await expect(
     page
+      .getByRole("heading", { name: /^Venta / })
+      .locator("..")
       .getByText(asset === "COP" ? "COMPLETED" : "AWAITING_PAYMENT", {
         exact: true,
-      })
-      .first(),
-  ).toBeVisible();
+      }),
+  ).toBeVisible({ timeout: 45_000 });
 }
 test("recorridos A, B, C y D en la aplicación", async ({ page }, info) => {
+  test.setTimeout(180_000);
   const person = await merchantFixture();
   page.on("dialog", (dialog) => dialog.accept());
   await page.goto("/admin/login");

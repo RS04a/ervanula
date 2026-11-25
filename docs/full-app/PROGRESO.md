@@ -12,9 +12,9 @@
 | 4. Cash Register, Payments y RabbitMQ | Terminado en modo local | Efectivo y cierre, evento de pago confirmado con el broker detenido, recuperación e Inbox, un movimiento digital, hash repetido, cancelación segura, expiración y revisión tardía. |
 | 5. Import | Terminado | Carga UTF-8, vista previa, resultados por fila, fila válida, precio inválido, rechazo de SKU previo y confirmación repetida. |
 | 6. Analytics | Terminado | Reconciliación, corte, totales COP/USDT independientes, diferencias de caja, predicados explicables y simulación sin cambios en catálogo o existencias. |
-| Frontend React | Verificado en la rama de rediseño | React Router, Vite y Tailwind. Portada pública, rutas con sesión bajo `/admin` y recorridos verificados en escritorio y móvil emulado. |
-| Marca | Integrada provisionalmente | Tres PNG con defectos de bordes visibles al ampliar. [Capturas y revisión](capturas/marca-react/README.md). |
-| Documentos y entrega | Paquete actualizado pendiente | C4, secuencia, guías, informe y presentación de la migración React disponibles. Las capturas de marca son posteriores a los PDF/PPTX y el ZIP deberá generarse desde la versión integrada. |
+| Frontend React | Integrado y verificado en `main` | React Router, Vite y Tailwind. Portada pública, rutas con sesión bajo `/admin` y recorridos en escritorio y móvil emulado. |
+| Marca | Provisional aceptada para la entrega | Tres PNG con defectos de bordes visibles al ampliar. [Capturas y revisión](capturas/marca-react/README.md). |
+| Documentos y entrega | Paquete local verificado | Informe, presentación, ZIP y manifiesto correspondientes al cierre académico del 25 de noviembre. [Archivos de entrega](../../ENTREGA.md#aplicación-completa--versión-react). |
 | ArveCoins en Shasta | Verificado en TESTNET el 24 de noviembre | 10 ARVE, orden confirmada, venta completada y reintento idempotente. [Evidencia](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026). |
 
 ## Evidencia histórica · perfil aislado del 21 de noviembre
@@ -69,7 +69,7 @@ La integración de marca sigue en el worktree. El logo horizontal aparece en por
 
 Los conteos de las rondas del [21](#evidencia-histórica--perfil-aislado-del-21-de-noviembre) y [22 de noviembre](VERIFICACION_FINAL.md) corresponden a sus respectivos cortes. La [transferencia real de prueba en Shasta](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026) se verificó el 24 de noviembre. Las rondas de React y marca usaron simulación.
 
-### Pendiente para la entrega integrada
+### Pendientes registrados antes de la integración
 
 - Revisar las capturas y decidir si se entregan los PNG provisionales. Si se requieren archivos definitivos, sustituirlos por una exportación del mismo diseño con transparencia y bordes limpios.
 - Guardar el incremento de marca y documentación en la rama de rediseño cuando se autorice. Integrar por avance rápido si `main` sigue siendo ancestro de la rama, conservando el commit `e1699de` con la evidencia de Shasta.
@@ -85,3 +85,11 @@ Se recorrió la portada, el acceso y los módulos en escritorio y móvil emulado
 - Una consulta SQL de solo lectura encontró un producto activo en el catálogo local, en ARVE y con saldo. Se preparó [un CSV de diez artículos](PRODUCTOS_DEMO.csv) en COP, ARVE y USDT. Solo se usó su vista previa en el perfil aislado. Los recorridos utilizaron comercios de prueba y no hubo transferencias blockchain.
 - Se añadieron la [guía de uso y pruebas](GUIA_DE_USO_Y_PRUEBAS.md) y la [clasificación de archivos y prioridades futuras](REVISION_DE_ENTREGA.md). El ZIP y la evidencia histórica de Shasta se conservaron.
 - Se movieron a la Papelera doce PNG temporales idénticos a sus copias persistentes. El inventario de archivos indica sus rutas y cómo recuperarlos.
+
+## Actualización de dependencias y documentos · 25 de noviembre de 2026
+
+El informe de npm pasó de 16 a 9 entradas. Con `--omit=dev`, pasó de 6 a 0. Se actualizaron Nest, Multer, body-parser, Effect y Vite dentro de sus versiones mayores existentes. Las dos cadenas pendientes necesitan revisar cambios mayores transitivos. [Rutas de dependencias, alcance y riesgos pendientes](AUDITORIA_DEPENDENCIAS.md).
+
+El informe y las diapositivas usan capturas del frontend integrado. Los logos siguen siendo provisionales por defectos visibles en los bordes al ampliar. El comprobante Shasta del 24 de noviembre se conserva como evidencia histórica.
+
+En la segunda ronda autorizada, TypeScript ESLint adoptó un Minimatch corregido y se verificó el ajuste acotado de `image-size` para PptxGenJS 4.0.1. Ambos comandos de auditoría devolvieron cero entradas. Se conservaron la configuración de lint, los archivos de marca y la presentación visual. [Pruebas de compatibilidad](AUDITORIA_DEPENDENCIAS.md#segunda-ronda-autorizada).

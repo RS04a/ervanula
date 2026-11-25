@@ -35,7 +35,7 @@ La evidencia corresponde a una transferencia real en **Shasta TESTNET**, con tok
 | Importe | 10 ARVE (`10000000` unidades base) |
 | Resultado en Shasta | `SUCCESS`, bloque `70417341`, recibo solidificado y 30 confirmaciones en la lectura original |
 | Orden local | `633a55bc8203e217bae819c0b7d109f41631b427db95b9e61306ad2fdbbe9742`, `CONFIRMED` a las 23:11:22, hora de Bogotá |
-| Venta local | `arve-shasta-demo-ac143646-75eb-4f5c-abe1-37e2f07f4932`, `COMPLETED` a las 23:11:24, hora de Bogotá |
+| Venta local (sufijo UUID) | `ac143646-75eb-4f5c-abe1-37e2f07f4932`, `COMPLETED` a las 23:11:24, hora de Bogotá |
 
 El perfil local de ARVE usó TronGrid. El endpoint autorizado de Payments devolvió HTTP 201 al confirmar. La reserva pasó a `CONSUMED`, hubo una sola salida de una unidad y quedaron dos disponibles con cero reservadas. Caja registró un único movimiento `DIGITAL_SALE` de 10 ARVE sin sesión física asociada. El saldo esperado de la caja de prueba siguió en 0 COP y no hubo movimientos COP.
 

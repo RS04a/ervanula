@@ -72,6 +72,8 @@ React Router conserva la ruta original al pedir inicio de sesión. Vite sirve la
 
 ## Documentación y demo
 
+El cierre académico del **25 de noviembre de 2026** reúne el frontend React integrado, la marca provisional aceptada y la evidencia de Shasta del 24 de noviembre. Las dos auditorías de npm devolvieron cero entradas en ese corte. El [registro de dependencias](docs/full-app/AUDITORIA_DEPENDENCIAS.md) detalla el override de `image-size` limitado a PptxGenJS 4.0.1 y los tiempos observados de **16,706 s** y **19,033 s** desde el borrador hasta completar dos ventas en efectivo de prueba. El alcance verificado es académico y local.
+
 - [Guía de uso y pruebas](docs/full-app/GUIA_DE_USO_Y_PRUEBAS.md) y [CSV de demostración](docs/full-app/PRODUCTOS_DEMO.csv).
 - [Revisión de preparación de entrega](docs/full-app/REVISION_DE_ENTREGA.md) y [capturas antes y después](docs/full-app/capturas/usabilidad/README.md).
 - [Guion A–D](docs/full-app/DEMO.md), [estado y verificaciones por fecha](docs/full-app/PROGRESO.md), [cierre auditado](docs/full-app/CIERRE_AUDITADO.md) y [verificación final](docs/full-app/VERIFICACION_FINAL.md).
@@ -83,7 +85,7 @@ React Router conserva la ruta original al pedir inicio de sesión. Vite sirve la
 
 El 24 de noviembre de 2026, Payments verificó por TronGrid una transferencia de **10 ARVE en Shasta TESTNET**, con tokens de prueba sin valor económico. La orden quedó `CONFIRMED` y la venta `COMPLETED`. Hubo un único consumo de inventario y un único cobro digital. La caja física en COP quedó intacta. El segundo envío del mismo hash conservó los registros. La verificación se hizo sin dinero real y el contrato de la demo se desplegó únicamente en Shasta.
 
-Para regenerar los documentos con capturas de prueba, ejecutar `npm run full:documents`. Desde el repositorio, `npm run full:package` genera `ARVELUNA_App_Completa.zip` y verifica su lista e integridad. Requiere Git, `zip` y `unzip`.
+Para regenerar los documentos con capturas de prueba, ejecutar `npm run full:documents`. Desde el repositorio, `npm run full:package` genera `ARVELUNA_App_Completa.zip` y verifica su [manifiesto](docs/full-app/entrega/MANIFIESTO.txt) y su integridad. Requiere Git, `zip` y `unzip`.
 
 La aplicación es de alcance académico. Los diagnósticos y recomendaciones operan sobre cortes con marca de tiempo. Las simulaciones exponen sus supuestos y preservan las operaciones reales. Payments verifica transferencias públicas mediante hashes y conserva auditoría.
 

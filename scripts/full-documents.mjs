@@ -34,6 +34,12 @@ const svgNames = [
 ];
 const asData = (buffer) => `data:image/png;base64,${buffer.toString("base64")}`;
 const captureData = (path) => asData(readFileSync(path));
+const interfaceCaptures = [
+  ["defensa-react/portada", "Portada pública en escritorio"],
+  ["defensa-react/resumen", "Resumen del comercio en escritorio"],
+  ["defensa-react/pagos-arve-movil", "Orden ARVE simulada en móvil"],
+  ["defensa-react/importacion", "Detalle de importación CSV en escritorio"],
+];
 function imageBox(data, x, y, width, height) {
   const image = Buffer.from(data.split(",")[1], "base64");
   const ratio = image.readUInt32BE(16) / image.readUInt32BE(20);
@@ -60,7 +66,7 @@ const slides = [
     body: [
       "Aplicación universitaria para pequeños comercios",
       "Alberto Russell y Yalal Ajram Elneser",
-      "Versión React · 25 de noviembre de 2026",
+      "Cierre académico · 25 de noviembre de 2026",
     ],
   },
   {
@@ -72,8 +78,8 @@ const slides = [
   {
     label: "PORTADA PÚBLICA",
     title: "Conocer ARVELUNA y entrar al panel",
-    photo: "react/portada",
-    note: "La portada / presenta al equipo y sus módulos. No solicita datos del comercio.",
+    photo: "defensa-react/portada",
+    note: "La portada presenta al equipo y sus módulos. Los logos son provisionales por defectos de bordes.",
   },
   {
     label: "FRONTEND Y SESIÓN",
@@ -124,7 +130,7 @@ const slides = [
   {
     label: "06 · EVIDENCIA",
     title: "Del hash a la auditoría",
-    photo: "react/pagos",
+    photo: "defensa-react/pagos",
     note: "Captura React del entorno simulado. La orden y su auditoría se consultan en /admin/pagos.",
   },
   {
@@ -140,13 +146,13 @@ const slides = [
   {
     label: "07 · FLUJO C",
     title: "Importación CSV comprobable",
-    photo: "react/importacion",
+    photo: "defensa-react/importacion",
     note: "Vista previa, validación por fila, aplicación idempotente y entrada de inventario.",
   },
   {
     label: "08 · FLUJO D",
     title: "Cortes y escenarios explicables",
-    photo: "react/resumen",
+    photo: "defensa-react/resumen",
     note: "Totales separados por activo. Simulaciones con supuestos explícitos y recomendaciones por umbral.",
   },
   {
@@ -155,7 +161,8 @@ const slides = [
     body: [
       "Flujos A–D verificados por HTTP, MySQL y RabbitMQ y repetidos en escritorio y móvil.",
       "La entrega del broker admite duplicados. Inbox y referencias evitan efectos repetidos.",
-      "Los cortes analíticos pueden quedar pendientes de sincronización.",
+      "Dos ventas de prueba tardaron 16,706 s y 19,033 s desde el borrador hasta completarse.",
+      "npm audit registró cero avisos. El alcance verificado es local.",
       "La prueba Shasta usó tokens de testnet. Alcance académico local.",
     ],
   },
@@ -170,6 +177,10 @@ const bodyCss = `
   pre{white-space:pre-wrap;background:#f2f5f3;padding:.8em}
   figure{margin:1em 0;break-inside:avoid;text-align:center}
   figure img{max-width:100%;max-height:130mm;object-fit:contain}
+  .interface-captures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7mm}
+  .interface-captures figure{margin:0}
+  .interface-captures img{height:76mm;width:100%;object-position:top}
+  .interface-captures figcaption{font-size:12px}
   .new{break-before:page}
 `;
 const deckCss = `
@@ -185,7 +196,10 @@ const deckCss = `
   .cover{background:#173b2d;color:white;padding-top:1.35in}.cover .label{color:#c5e3bb}.cover h1{font-size:70px}
 `;
 
-for (const { photo } of slides) {
+for (const photo of [
+  ...slides.map((slide) => slide.photo),
+  ...interfaceCaptures.map(([name]) => name),
+]) {
   if (photo && !existsSync(capture(photo)))
     throw new Error(`Falta la captura de defensa: ${photo}`);
 }
@@ -259,8 +273,14 @@ try {
         `<section class="${index ? "new" : ""}">${renderMarkdown(name)}</section>`,
     )
     .join("");
+  const frontendEvidence = `<section class="new"><h2>Interfaz integrada de ARVELUNA</h2><p>Capturas del perfil aislado. Los logos son provisionales por defectos de bordes. La orden ARVE de esta página corresponde al simulador.</p><div class="interface-captures">${interfaceCaptures
+    .map(
+      ([photo, caption]) =>
+        `<figure><img src="${captureData(capture(photo))}" alt="${htmlText(caption)}"><figcaption>${htmlText(caption)}</figcaption></figure>`,
+    )
+    .join("")}</div></section>`;
   await page.setContent(
-    `<!doctype html><html lang="es"><meta charset="utf-8"><title>ARVELUNA · Informe técnico</title><style>${bodyCss}</style><body>${content}${appendix}</body></html>`,
+    `<!doctype html><html lang="es"><meta charset="utf-8"><title>ARVELUNA · Informe técnico</title><style>${bodyCss}</style><body>${content}${frontendEvidence}${appendix}</body></html>`,
   );
   await page.pdf({
     path: join(output, "ARVELUNA_Informe_Tecnico.pdf"),
