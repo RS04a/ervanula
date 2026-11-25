@@ -121,6 +121,13 @@ backend/test/support/memory.ts
 backend/test/support/trongrid.fixture.ts
 backend/test/trongrid.test.ts
 backend/tsconfig.json
+contracts/arvecoins/.gitignore
+contracts/arvecoins/README.md
+contracts/arvecoins/contracts/ArveCoins.sol
+contracts/arvecoins/package-lock.json
+contracts/arvecoins/package.json
+contracts/arvecoins/test/arvecoins.test.mjs
+contracts/arvecoins/tronbox-config.js
 docker-compose.full-app.yml
 docker-compose.yml
 docs/ARVELUNA_Documentacion_Tecnica_Entrega_1.md

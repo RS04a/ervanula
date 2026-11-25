@@ -38,3 +38,9 @@ Los casos de TronGrid existentes usan fixtures. Quedan pendientes pruebas de lec
 ## Punto de continuación
 
 El código local y el paquete se entregan sin commit ni publicación. La próxima comprobación externa es obtener la referencia de ArveCoins para ejecutar [la guía de testnet](ARVECOINS.md). El proyecto de prueba se detuvo con `npm run full:stop -- test`. Sus volúmenes se conservaron para volver a ejecutar la verificación.
+
+## Continuación · 22 de noviembre de 2026
+
+La nueva ronda pasó las cuatro rutas A–D y las suites históricas y de aplicación completa. El commit local de la aplicación es `5b33a0f`. Véase el [registro de verificación final](VERIFICACION_FINAL.md).
+
+Después del commit se creó el proyecto ArveCoins y se verificaron la compilación y cinco pruebas en TVM local. El proyecto quedó incluido en el ZIP actualizado. La próxima comprobación es el despliegue manual en Shasta y la validación de una venta con una transferencia de esa red siguiendo la [guía ArveCoins](ARVECOINS.md).
