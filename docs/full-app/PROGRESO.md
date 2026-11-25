@@ -2,7 +2,7 @@
 
 **21 de noviembre de 2026 · America/Bogota.** Rama `main`, HEAD `14cc1b8ce940dab4009a3b4913a39278f57a72c7`. El árbol original estaba limpio. Se usó el Git incluido en GitHub Desktop porque el Git del sistema requiere Xcode Command Line Tools. El checkout no contiene `docs/audit` ni `docs/final`. Se revisó la auditoría disponible en `docs/defense/audit.md` y se preservaron los artefactos históricos.
 
-## Checklist
+## Checklist vigente
 
 | Entrega | Estado | Evidencia |
 | --- | --- | --- |
@@ -14,9 +14,9 @@
 | 6. Analytics | Terminado | Reconciliación, corte, totales COP/USDT independientes, diferencias de caja, predicados explicables y simulación sin cambios en catálogo o existencias. |
 | Frontend | Terminado | Playwright completó A–D en escritorio y en emulación Pixel 7. Capturas de dashboard, pago e importación de ambos proyectos. |
 | Documentos y entrega | Terminado | C4, secuencia, guía, contratos, informe PDF, PPTX/PDF y paquete separado. |
-| ArveCoins en vivo | Pendiente de intervención | Perfil independiente probado sin red. Falta la referencia verificable a contrato propio de testnet. Ver [guía ARVE](ARVECOINS.md). |
+| ArveCoins en Shasta | Verificado en TESTNET el 24 de noviembre | 10 ARVE, orden confirmada, venta completada y reintento idempotente. [Evidencia](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026). |
 
-## Ejecutado en perfil aislado
+## Evidencia histórica · perfil aislado del 21 de noviembre
 
 - Instalación `npm ci` con lockfile y generación de ocho clientes Prisma. La extracción del ZIP en un directorio temporal vacío repitió instalación, generación, lint, tipos, build y las 55 unitarias.
 - `npm run full:env -- test` y `npm run full:up -- test`. MySQL y RabbitMQ saludables, en puertos separados 43376 y 45772, proyecto Compose `arveluna-full-test`.
@@ -33,9 +33,9 @@
 
 El primer arranque de MySQL rechazó el script montado. Se recuperó con un aprovisionamiento aditivo por SQL en el mismo proyecto, conservando el volumen. La instalación sin red carecía de Tailwind en caché. La instalación aprobada con acceso a npm terminó. Los primeros recorridos Playwright detectaron selectores ambiguos. Se corrigieron y completaron ambos proyectos. La secuencia Mermaid se corrigió tras el primer error de sintaxis y volvió a renderizar.
 
-Los casos de TronGrid existentes usan fixtures. Quedan pendientes pruebas de lectura en red real y la intervención manual de ArveCoins. Los cortes de Analytics son eventualmente consistentes. Los reintentos de mensajes admiten duplicados. El sistema es de uso académico, con una caja por comercio e inventario en unidades enteras.
+Los casos de TronGrid existentes usan fixtures. En esa revisión quedaban pendientes la lectura en Shasta y la intervención de ArveCoins. Los cortes de Analytics son eventualmente consistentes. Los reintentos de mensajes admiten duplicados. El sistema es de uso académico, con una caja por comercio e inventario en unidades enteras.
 
-## Punto de continuación
+## Punto de continuación registrado el 21 de noviembre
 
 El código local y el paquete se entregan sin commit ni publicación. La próxima comprobación externa es obtener la referencia de ArveCoins para ejecutar [la guía de testnet](ARVECOINS.md). El proyecto de prueba se detuvo con `npm run full:stop -- test`. Sus volúmenes se conservaron para volver a ejecutar la verificación.
 
@@ -43,4 +43,8 @@ El código local y el paquete se entregan sin commit ni publicación. La próxim
 
 La nueva ronda pasó las cuatro rutas A–D y las suites históricas y de aplicación completa. El commit local de la aplicación es `5b33a0f`. Véase el [registro de verificación final](VERIFICACION_FINAL.md).
 
-Después del commit se creó el proyecto ArveCoins y se verificaron la compilación y cinco pruebas en TVM local. El proyecto quedó incluido en el ZIP actualizado. La próxima comprobación es el despliegue manual en Shasta y la validación de una venta con una transferencia de esa red siguiendo la [guía ArveCoins](ARVECOINS.md).
+Después del commit se creó el proyecto ArveCoins y se verificaron la compilación y cinco pruebas en TVM local. El proyecto quedó incluido en el ZIP actualizado. En ese momento quedaba pendiente completar la [guía ArveCoins](ARVECOINS.md) y verificar una venta en Shasta.
+
+## Continuación · 24 de noviembre de 2026
+
+Se completó la prueba en vivo de ArveCoins en Shasta. Payments confirmó por TronGrid una transferencia manual de 10 ARVE. Sales completó la venta, Inventory registró una única salida y Cash registró un cobro digital sin cambiar el efectivo COP. La repetición del hash dejó los registros intactos. [Evidencia pública y resultados](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026)

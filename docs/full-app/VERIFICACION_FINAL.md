@@ -17,6 +17,10 @@ Los siete diagramas Mermaid se renderizaron y se contrastaron con los protocolos
 
 La demo histórica construía la URL del Gateway con el puerto 3000. En un perfil aislado podía apuntar al proceso local equivocado. El frontend usa rutas relativas y Vite mantiene el proxy tanto en desarrollo como en vista previa. El mock de Playwright sigue la ruta sin fijar el host. El ejecutor histórico comprueba el puerto publicado por Compose, asigna permisos al esquema generado y conserva el esquema después de la prueba. No se alteraron las reglas de venta, caja, reserva o verificación.
 
-## Pendientes externos
+## Cobertura externa al 22 de noviembre
 
-TronGrid se comprobó mediante fixtures en las suites históricas. Shasta y ARVE se comprobaron con el proveedor simulado. La comprobación en la red pública se registra aparte. La caracterización detallada de errores y concurrencia se conserva en [Cierre auditado](CIERRE_AUDITADO.md).
+TronGrid se comprobó mediante fixtures en las suites históricas. Shasta y ARVE se comprobaron con el proveedor simulado. La suite de ese corte no ejecutó una transferencia en una red pública. La caracterización detallada de errores y concurrencia se conserva en [Cierre auditado](CIERRE_AUDITADO.md).
+
+## Prueba en Shasta · 24 de noviembre de 2026
+
+Una transferencia manual de 10 ARVE de prueba se verificó por TronGrid en la aplicación completa. Se comprobaron la confirmación de la orden, la venta completada, el consumo de una unidad, el único cobro digital, la caja COP sin cambios, la auditoría y la mensajería. Se repitió la verificación con el mismo hash y se cotejaron los registros antes y después. [Evidencia de Shasta](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).

@@ -42,3 +42,5 @@ El 22 de noviembre de 2026 pasaron cinco pruebas. En TVM en memoria se ejecutaro
 5. Comprueba que la orden alcance `CONFIRMED` y la venta `COMPLETED`. Revisa un único consumo, un único movimiento digital ARVE y el saldo físico de caja. Guarda como evidencia la fecha, dirección pública, hash, bloque, confirmaciones, identificadores de orden y venta, y capturas de auditoría e inventario. Ante un pago después del vencimiento, conserva el hash para revisión manual. ARVELUNA verifica evidencia pública y carece de funciones de firma, custodia, envío o devolución de fondos.
 
 **Estado al 22 de noviembre de 2026:** compilación y ejecución local verificadas. Despliegue, transferencia y verificación con una orden real de Shasta pendientes.
+
+**Actualización del 24 de noviembre de 2026.** El contrato fue desplegado manualmente en Shasta y ARVELUNA verificó por TronGrid una venta de 10 ARVE. La auditoría, el consumo de inventario, el cobro digital y la idempotencia quedaron registrados. [Evidencia de la integración](../../docs/full-app/ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026)

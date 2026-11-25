@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, posix, resolve } from "node:path";
 import process from "node:process";
 import { chromium } from "@playwright/test";
 import { marked } from "marked";
@@ -12,6 +12,15 @@ const macChrome =
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const filename = (name) => resolve(folder, name);
 const source = (name) => readFileSync(filename(name), "utf8");
+const repositoryDocs = "https://github.com/RS04a/ervanula/blob/main/";
+function renderMarkdown(name, markdown = source(name)) {
+  return marked.parse(markdown).replace(/href="([^"]+)"/g, (original, href) => {
+    if (/^[a-z][a-z\d+.-]*:/i.test(href)) return original;
+    const [path, anchor] = href.split("#", 2);
+    const target = posix.normalize(posix.join(folder, path || name));
+    return `href="${repositoryDocs}${target}${anchor ? `#${anchor}` : ""}"`;
+  });
+}
 const capture = (name) => filename(`capturas/${name}.png`);
 const svgNames = [
   "C4-contexto.md",
@@ -50,7 +59,7 @@ const slides = [
     body: [
       "Aplicación universitaria para pequeños comercios",
       "Alberto Russell y Yalal Ajram Elneser",
-      "Cierre verificado · 22 de noviembre de 2026",
+      "Cierre verificado en Shasta · 24 de noviembre de 2026",
     ],
   },
   {
@@ -103,7 +112,17 @@ const slides = [
     label: "06 · EVIDENCIA",
     title: "Del hash a la auditoría",
     photo: "escritorio-pago",
-    note: "Una venta espera el evento validado contra orden, activo, monto, red y contrato.",
+    note: "Captura histórica de la demo simulada. La venta espera el evento validado contra la orden, el activo, el monto, la red y el contrato.",
+  },
+  {
+    label: "SHASTA · TESTNET",
+    title: "10 ARVE verificados por TronGrid",
+    body: [
+      "Recibo SUCCESS y solidificado. Bloque 70 417 341, con 30 confirmaciones al verificar.",
+      "Orden CONFIRMED y venta COMPLETED. Auditoría y eventos procesados.",
+      "Una salida de inventario y un cobro digital de 10 ARVE. Efectivo COP sin cambios.",
+      "Repetir el hash conservó los registros. Tokens de prueba sin valor económico.",
+    ],
   },
   {
     label: "07 · FLUJO C",
@@ -124,7 +143,7 @@ const slides = [
       "Flujos A–D verificados por HTTP, MySQL y RabbitMQ y repetidos en escritorio y móvil.",
       "La entrega del broker admite duplicados. Inbox y referencias evitan efectos repetidos.",
       "Los cortes analíticos pueden quedar pendientes de sincronización.",
-      "ArveCoins: perfil testnet preparado. Comprobación en vivo pendiente.",
+      "La prueba Shasta usó tokens de testnet. Alcance académico local.",
     ],
   },
 ];
@@ -218,7 +237,8 @@ try {
   const appendix = svgNames
     .map((name, index) => {
       const title = source(name).split("\n")[0].replace(/^# /, "");
-      return `<section class="new"><h2>${htmlText(title)}</h2><figure><img src="${images[index].data}" alt="${htmlText(title)}"></figure>${marked.parse(
+      return `<section class="new"><h2>${htmlText(title)}</h2><figure><img src="${images[index].data}" alt="${htmlText(title)}"></figure>${renderMarkdown(
+        name,
         source(name)
           .split(/\n/)
           .slice(1)
@@ -230,7 +250,7 @@ try {
   const content = ["TECNICO.md", "CONTRATOS.md", "DEMO.md", "ARVECOINS.md"]
     .map(
       (name, index) =>
-        `<section class="${index ? "new" : ""}">${marked.parse(source(name))}</section>`,
+        `<section class="${index ? "new" : ""}">${renderMarkdown(name)}</section>`,
     )
     .join("");
   await page.setContent(
@@ -343,7 +363,7 @@ try {
     printBackground: true,
   });
   console.log(
-    "Se renderizaron siete Mermaid, el informe técnico y doce láminas en PPTX y PDF.",
+    `Se renderizaron ${svgNames.length} diagramas Mermaid, el informe técnico y ${slides.length} láminas en PPTX y PDF.`,
   );
 } finally {
   await browser.close();

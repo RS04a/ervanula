@@ -18,14 +18,14 @@ flowchart LR
     sql["PrismaSales [repositorio de ventas y eventos]"]
     rem["HttpSaleOperations [adaptador saliente]"]
     mq["Broker [publicador y consumidor]"]
-    out["Outbox [reclamación de transferencia]"]
+    out["Outbox [reclama publicaciones pendientes]"]
     ctl -->|"Ejecuta operaciones"| app
     worker -->|"Reanuda paso persistido"| app
     app -->|"Aplica reglas"| domain
-    app -->|"Puerto SaleRepository"| sql
+    app -->|"Persiste saga, Inbox y venta completada"| sql
     app -->|"Puerto SaleOperations"| rem
-    mq -->|"Procesa evento e Inbox"| sql
-    mq -->|"Lee trabajo pendiente"| out
+    mq -->|"Entrega evento de pago"| app
+    mq -->|"Solicita y marca publicaciones"| out
   end
   gw -->|"JSON HTTP"| ctl
   sql -->|"Prisma / SQL"| db
@@ -52,4 +52,4 @@ flowchart LR
 | Import | `ImportController`, worker de filas | `Imports`, validación de columnas, cantidades y SKU | Parser CSV, `PrismaImports`, cliente HTTP Inventory |
 | Analytics | `AnalyticsController`, consumidor y worker | `Analytics`, funciones `diagnostics`, `simulate` y `recommendations` | `PrismaReadModels`, colector paginado por HTTP, Inbox |
 
-**Leyenda.** Verde claro identifica componentes del contenedor Sales, iconos de almacenamiento identifican infraestructura y las flechas muestran llamadas y titularidad. Las dependencias de código se presentan en el informe técnico.
+**Leyenda.** Verde claro identifica componentes del contenedor Sales. El cilindro representa el esquema MySQL y el nodo de doble borde representa RabbitMQ. Las flechas apuntan desde el iniciador hacia el destino y sus etiquetas indican llamadas, protocolo y propósito. Las dependencias de código se presentan en el informe técnico.

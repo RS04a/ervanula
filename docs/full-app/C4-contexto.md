@@ -7,16 +7,16 @@ flowchart LR
   A["Administrador<br/>[Persona]<br/>Configura comercio, usuarios y catálogo"]
   C["Cajero<br/>[Persona]<br/>Opera ventas, caja y pagos"]
   B["Comprador<br/>[Persona]<br/>Paga al comercio"]
-  S["ARVELUNA<br/>[Sistema de software]<br/>Operación local de pequeños comercios"]
+  S["ARVELUNA<br/>[Sistema de software]<br/>Vite, NestJS, MySQL y RabbitMQ"]
   W["Billetera externa<br/>[Sistema externo]<br/>Gestiona y firma transferencias del comprador"]
   T["TRON<br/>[Red externa]<br/>Ejecuta y registra transferencias"]
   G["TronGrid<br/>[API externa]<br/>Expone datos públicos de TRON"]
   A -->|"Gestiona el comercio [web]"| S
   C -->|"Registra operaciones [web]"| S
   B -->|"Entrega efectivo o comparte el hash"| C
-  B -->|"Autoriza el pago en su billetera"| W
+  B -->|"Firma manualmente [TronLink en la prueba]"| W
   W -->|"Transmite una transferencia firmada [protocolo TRON]"| T
-  S -->|"Consulta evidencia pública [HTTPS, perfil opcional]"| G
+  S -->|"Lee transacción, recibo y bloque [HTTPS]"| G
   G -->|"Lee bloques y transacciones [nodos TRON]"| T
   classDef person fill:#e3efdc,stroke:#387257,color:#142e25
   classDef system fill:#285f49,stroke:#163d31,color:#fff
@@ -28,4 +28,4 @@ flowchart LR
 
 **Leyenda.** Verde claro representa personas, verde oscuro representa ARVELUNA y azul claro representa un sistema externo. Las flechas muestran el iniciador y la relación.
 
-El perfil ARVE de prueba usa Shasta simulado. El perfil opcional con TronGrid solo lee evidencia de la red seleccionada. La firma permanece en la billetera externa.
+El perfil automatizado usa fixtures. La prueba del 24 de noviembre usó TronGrid en Shasta TESTNET para leer recibo, bloque y evento de una transferencia manual de 10 ARVE. La firma permanece en la billetera externa.

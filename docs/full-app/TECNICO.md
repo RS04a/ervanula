@@ -2,7 +2,7 @@
 
 **Universidad del Norte · Diseño de Software 2**  
 **Alberto Russell y Yalal Ajram Elneser**  
-**Versión de trabajo · 21 de noviembre de 2026**
+**Cierre documental · 24 de noviembre de 2026**
 
 ARVELUNA reúne identidad, catálogo, existencias, ventas, caja, pagos, importación y análisis operativo para pequeños comercios. Ejecuta HTTP para consultas y comandos interservicio que necesitan respuesta. Usa RabbitMQ para propagar hechos confirmados. Payments verifica transferencias públicas y conserva evidencia.
 
@@ -81,8 +81,14 @@ Las simulaciones usan supuestos explícitos en puntos base. Por ejemplo, dos uni
 
 RabbitMQ usa mensajes persistentes, confirmaciones de publicación, colas durables, leases de Outbox y ACK después del commit. El Inbox deduplica por identificador y valida las transiciones ante eventos fuera de orden. Los reintentos de consumo tienen espera y límite, con DLQ para revisión. La reconexión reanuda entregas. El transporte permite duplicados.
 
-Alcance académico local con catálogo discreto, una caja por comercio y análisis acotado a 5.000 registros por origen. Un origen de 5.001 filas produce `PROJECTION_LIMIT` (409) en la reconciliación, sin persistir resultados parciales. Se conserva el último corte completo como desactualizado. Si aún no existía un corte, la consulta puede indicar `PROJECTION_PENDING` durante el periodo de reintento. Los cortes por API pueden mezclar instantes cercanos de distintos servicios. El periodo de una proyección puede quedar temporalmente desfasado. La verificación de hash es manual y las recomendaciones son reglas deterministas. La comprobación real de ArveCoins y TronGrid en vivo queda pendiente. Los flujos blockchain verifican lecturas. Una persona revisa las excepciones. El sistema carece de certificación fiscal, despliegue de producción, conversión de activos y devolución de fondos.
+Alcance académico local con catálogo discreto, una caja por comercio y análisis acotado a 5.000 registros por origen. Un origen de 5.001 filas produce `PROJECTION_LIMIT` (409) en la reconciliación, sin persistir resultados parciales. Se conserva el último corte completo como desactualizado. Si aún no existía un corte, la consulta puede indicar `PROJECTION_PENDING` durante el periodo de reintento. Los cortes por API pueden mezclar instantes cercanos de distintos servicios. El periodo de una proyección puede quedar temporalmente desfasado. La verificación de hash es manual y las recomendaciones son reglas deterministas. Payments consulta evidencia pública de TRON. La verificación manual del hash y la revisión de excepciones siguen a cargo de una persona. El sistema carece de certificación fiscal, despliegue de producción, conversión de activos y devolución de fondos.
+
+## Verificación de ArveCoins en Shasta
+
+El 24 de noviembre de 2026, el integrante transfirió 10 ARVE (10 000 000 unidades base) desde su billetera en Shasta TESTNET. Payments verificó por TronGrid el contrato ArveCoins (ARVE, 6 decimales), el receptor y el importe. El recibo del bloque 70 417 341 devolvió `SUCCESS`, estaba solidificado y registraba 30 confirmaciones en esa lectura. Los tokens de prueba carecen de valor económico. No se usó dinero real ni se desplegó en Mainnet.
+
+La orden quedó `CONFIRMED` y Sales completó la venta. Se consumió una reserva, se registró una sola salida de una unidad y se asentó un único cobro digital de 10 ARVE. La caja física conservó 0 COP. La auditoría registró creación, detección y verificación sin fallo. Los hechos `payment.confirmed.v1` y `sale.completed.v1` se publicaron y procesaron en los consumidores previstos. La segunda solicitud con el mismo hash dejó los registros intactos. [Identificadores, resultados y enlace al explorador](ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026).
 
 ## Evidencia de entrega
 
-El entorno aislado usa el prefijo `arveluna_full_test`, puertos distintos y volúmenes independientes. La primera verificación consta en [PROGRESO](PROGRESO.md). Los resultados de estrés, seguridad y procedencia constan en [CIERRE_AUDITADO](CIERRE_AUDITADO.md). La [demo](DEMO.md) recorre los cuatro flujos y el [perfil ARVE](ARVECOINS.md) describe la intervención manual.
+El entorno aislado usa el prefijo `arveluna_full_test`, puertos distintos y volúmenes independientes. La primera verificación consta en [PROGRESO](PROGRESO.md). Los resultados de estrés, seguridad y procedencia constan en [CIERRE_AUDITADO](CIERRE_AUDITADO.md). La [demo](DEMO.md) recorre los cuatro flujos y la [guía ARVE](ARVECOINS.md) reúne el procedimiento y la evidencia de Shasta.

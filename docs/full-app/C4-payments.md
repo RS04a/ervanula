@@ -19,12 +19,12 @@ flowchart TB
     W["Worker de expiración [tarea local]"]
     ST["TronUsdtVerificationStrategy [reglas TRC-20]"]
     PX["BlockchainProviderProxy [timeout y reintento]"]
-    AD["TronGridPaymentProvider / SimulatedBlockchainProvider [adaptadores]"]
+    AD["TronGridPaymentProvider<br/>SimulatedBlockchainProvider [adaptadores]"]
     R["PrismaPaymentRepositories [persistencia]"]
     O["Outbox + Broker [publicación confirmada]"]
     C -->|"Valida DTO"| D
     C -->|"Invoca casos de uso"| U
-    C -->|"Traduce fallos"| E
+    C -->|"Delega excepciones HTTP al filtro global"| E
     W -->|"Ejecuta expiración"| U
     U -->|"Verifica evidencia"| ST
     U -->|"Solicita transacción por puerto"| PX
@@ -35,14 +35,14 @@ flowchart TB
   SA -->|"HTTP · checkout y consulta autoritativa de orden"| C
   C -->|"HTTP · introspección de sesión"| AU
   U -->|"HTTP · consulta receptor configurado"| ME
-  AD -->|"HTTPS · evidencia pública opcional"| TR
+  AD -->|"HTTPS · transacción, recibos y altura"| TR
   R -->|"SQL · orden, evidencia, auditoría y Outbox"| DB
   O -->|"SQL · reclama y marca publicación"| DB
-  O -->|"AMQP · publica hechos de pago"| MQ
+  O -->|"AMQP · publica confirmación, expiración o pago tardío"| MQ
   classDef service fill:#e1f1e8,stroke:#337257,color:#143429
   classDef data fill:#eaf2d8,stroke:#658642,color:#25351b
   class C,D,E,U,W,ST,PX,AD,R,O service
   class DB,MQ data
 ```
 
-**Leyenda.** Verde claro identifica componentes desplegados dentro de Payments. Los nodos exteriores son procesos, esquemas o sistemas externos. Las flechas indican llamadas en ejecución.
+**Leyenda.** Verde claro identifica componentes NestJS dentro de Payments. El cilindro es su esquema MySQL y el doble borde es RabbitMQ. Los demás nodos exteriores son procesos NestJS u otro sistema. Las flechas indican iniciador, destino y propósito. El adaptador TronGrid obtuvo los recibos de Shasta en la prueba verificada.

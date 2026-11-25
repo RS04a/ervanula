@@ -25,7 +25,7 @@ flowchart TB
     gw -->|"Catálogo / movimientos [HTTP]"| inv
     gw -->|"Ventas [HTTP]"| sa
     gw -->|"Caja [HTTP]"| ca
-    gw -->|"Órdenes / auditoría [HTTP]"| pa
+    gw -->|"Órdenes, verificación y auditoría [HTTP]"| pa
     gw -->|"CSV [HTTP]"| im
     gw -->|"Consultas [HTTP]"| an
     sa -->|"Precios / reservas [HTTP]"| inv
@@ -35,11 +35,11 @@ flowchart TB
     im -->|"Aplica filas [HTTP]"| inv
     id & me & inv & sa & ca & pa & im & an -->|"Prisma / SQL · esquema propio"| db
     pa & inv & sa -->|"Publica hechos [AMQP]"| mq
-    mq -->|"Pagos [AMQP]"| sa
+    mq -->|"Confirmación, expiración y pago tardío [AMQP]"| sa
     mq -->|"Invalida proyecciones [AMQP]"| an
   end
   user -->|"Opera [navegador]"| ui
-  pa -->|"Consulta de solo lectura [HTTPS opcional]"| tr
+  pa -->|"Lee transacción, recibos y altura [HTTPS]"| tr
   classDef external fill:#eef3f8,stroke:#53677d,color:#182637
   classDef store fill:#eaf2d8,stroke:#658642,color:#25351b
   classDef process fill:#e1f1e8,stroke:#337257,color:#143429
@@ -58,4 +58,4 @@ La [vista de propiedad de datos](C4-datos.md) identifica los ocho esquemas y el 
 
 **Leyenda.** Rectángulos verdes representan aplicaciones, siluetas verdes claras representan infraestructura o datos y azul claro representa actores externos. Las flechas etiquetadas identifican el protocolo y la responsabilidad. La tabla de propiedad en el informe técnico identifica cada esquema.
 
-En la demo histórica, Vite reenvía `/api` al Gateway del perfil activo.
+Vite reenvía `/api` al Gateway del perfil activo. Payments consultó el recibo solidificado de ARVE por HTTPS en Shasta.

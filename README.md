@@ -65,7 +65,9 @@ Con el backend de prueba en marcha, ejecutar `npm run full:test -- test`. En otr
 - [C4 Contexto](docs/full-app/C4-contexto.md), [Contenedores](docs/full-app/C4-contenedores.md), [Componentes](docs/full-app/C4-componentes.md), [propiedad de datos](docs/full-app/C4-datos.md), [Payments](docs/full-app/C4-payments.md), [dependencias de código](docs/full-app/Clean-Architecture.md) y [secuencia](docs/full-app/secuencia.md).
 - [Informe técnico y mapa de archivos](docs/full-app/TECNICO.md) y [contratos, eventos y permisos](docs/full-app/CONTRATOS.md).
 - [PDF técnico](docs/full-app/entrega/ARVELUNA_Informe_Tecnico.pdf), [PPTX](docs/full-app/entrega/ARVELUNA_Defensa.pptx) y [PDF de defensa](docs/full-app/entrega/ARVELUNA_Defensa.pdf).
-- [Guía ArveCoins](docs/full-app/ARVECOINS.md). El checkout USDT usa el simulador por defecto. El perfil ARVE de testnet es opcional e independiente.
+- [ArveCoins en Shasta y evidencia de la prueba](docs/full-app/ARVECOINS.md#verificación-en-shasta--24-de-noviembre-de-2026). El checkout USDT usa el simulador por defecto. El perfil ARVE es independiente.
+
+El 24 de noviembre de 2026, Payments verificó por TronGrid una transferencia de **10 ARVE en Shasta TESTNET**, con tokens de prueba sin valor económico. La orden quedó `CONFIRMED` y la venta `COMPLETED`. Hubo un único consumo de inventario y un único cobro digital. La caja física en COP quedó intacta. El segundo envío del mismo hash conservó los registros. La verificación se hizo sin dinero real y el contrato de la demo se desplegó únicamente en Shasta.
 
 Para regenerar los documentos con capturas de prueba, ejecutar `npm run full:documents`. Desde el repositorio, `npm run full:package` genera `ARVELUNA_App_Completa.zip` y verifica su lista e integridad. Requiere Git, `zip` y `unzip`.
 
